@@ -168,18 +168,20 @@ ws.merge_cells("B2:E2")
 c = ws["B2"]; c.value = "EVALUACIÓN OPERATIVA — CEDI MADRID"
 c.font = f(19, True, NAVY_D); ws.row_dimensions[2].height = 32
 ws.merge_cells("B3:E3")
-c = ws["B3"]; c.value = "Formato de captura en piso · Visita día 1"
+c = ws["B3"]; c.value = "Flujo del pedido: reabastecimiento · secuencia · alistamiento · cargue · despacho"
 c.font = f(11, False, TAPE)
 
-ws.merge_cells("B5:E6")
+ws.merge_cells("B5:E7")
 c = ws["B5"]
-c.value = ("Hoy no se diagnostica: se captura evidencia propia que después nadie pueda discutir. Cada hoja trae el "
-           "procedimiento paso a paso, las reglas para no dudar al llenarla y las preguntas que debes hacer según el "
-           "resultado que te dé. Diligencia solo las celdas amarillas: las grises se calculan solas y alimentan la hoja Resumen.")
+c.value = ("Este archivo sigue el pedido de punta a punta. No mide personas: mide cuánto tiempo el pedido avanza y cuánto "
+           "pasa quieto. Cada hoja trae el procedimiento paso a paso, las reglas para no dudar al llenarla y las preguntas "
+           "que debes hacer según el resultado. Diligencia solo las celdas amarillas; las grises se calculan solas y "
+           "alimentan la hoja Resumen. Todo lo que se pide aquí lo puedes capturar tú mismo en un día: nada depende de "
+           "que otra persona lleve un registro durante horas.")
 c.font = f(10, color="46525E"); c.alignment = WRAP
-ws.row_dimensions[5].height = 16; ws.row_dimensions[6].height = 30
+for rr in (5, 6, 7): ws.row_dimensions[rr].height = 16
 
-r = 8
+r = 9
 ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=5)
 c = ws.cell(row=r, column=2, value="  DATOS DE LA VISITA")
 c.font = f(9, True, WHITE); c.fill = PatternFill("solid", fgColor=NAVY); c.alignment = Alignment(vertical="center")
@@ -189,6 +191,7 @@ campos = [("Centro de distribución", "CEDI Madrid"), ("Fecha de la visita", Non
           ("Día de la semana", None), ("Responsable de la evaluación", None),
           ("Jefe del CEDI", None), ("Turno observado", None),
           ("Hora de corte de pedidos", None), ("Hora de salida del último camión", None)]
+f_ini = r
 for lab, val in campos:
     a = ws.cell(row=r, column=2, value=lab); a.font = f(10, True); a.border = BOX
     a.fill = PatternFill("solid", fgColor=GREY_H); a.alignment = Alignment(vertical="center", indent=1)
@@ -196,7 +199,8 @@ for lab, val in campos:
     b.fill = PatternFill("solid", fgColor=YELLOW); b.font = f(10, color="00329B")
     ws.row_dimensions[r].height = 19
     r += 1
-ayuda(ws, "C9:C16", "Datos de la visita", "Llena estos campos apenas llegues. La hora de corte es el eje del día: lo importante pasa en las tres horas anteriores.")
+ayuda(ws, "C{}:C{}".format(f_ini, r - 1), "Datos de la visita",
+      "La hora de corte es el eje del día: las tres horas anteriores concentran el pico, los errores y las esperas.")
 
 r += 1
 ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=5)
@@ -211,15 +215,18 @@ for i, lab in enumerate(["Momento", "Qué haces", "Dónde lo registras"], start=
 ws.row_dimensions[r].height = 22
 r += 1
 ruta = [
-    ("Al llegar", "Apertura de 10 minutos, de pie. Nada de sala de juntas.", "1 Checklist"),
-    ("Primeros 30 min", "Etiquetar pallets en piso · abrir planilla en portería · encargar el conteo ciego.", "7 · 6 · 4"),
+    ("Al llegar", "Apertura de 10 minutos, de pie. Preguntar la hora de corte y el esquema de programación de salidas.", "1 · 7"),
+    ("Primeros 30 min", "Barrido 1 de la cara de picking · etiquetar producto en piso · encargar el conteo ciego.", "5 · 2 · 4"),
+    ("Primeros 30 min", "Escoger 20 pedidos del día y anotar su hora de liberación. Es el arranque del cronómetro.", "6 Seguimiento"),
     ("Mañana", "Recorrido a contracorriente y conteo de ocupación en 5 pasillos.", "2 Ocupación"),
     ("Mañana", "Cronometrar el ciclo completo de 4 operarios.", "3 Ciclo picking"),
-    ("Todo el día", "Una ronda de muestreo cada 20 minutos.", "5 Muestreo"),
-    ("Todo el turno", "Planilla de agotados en manos de un supervisor de picking.", "8 Agotados"),
-    ("3 h antes del corte", "Segundo recorrido en el pico. Observar chequeo y despacho.", "11 Hallazgos"),
+    ("Media mañana", "Barrido 2 de la cara de picking. Revisar si las posiciones vacías del barrido 1 ya se repusieron.", "5 Reabastecimiento"),
+    ("Todo el día", "Ir anotando las horas de los 20 pedidos: alistamiento, chequeo, cargue y salida.", "6 Seguimiento"),
+    ("3 h antes del corte", "Barrido 3, el más importante. Observar chequeo, staging y cargue en el pico.", "5 · 8"),
+    ("Pico y cierre", "Registrar los vehículos y si el pedido estaba listo cuando llegó cada uno.", "8 Muelle y cargue"),
+    ("Al cierre", "Reconstruir la secuencia: en qué orden se alistó frente al orden en que debía salir.", "7 Prioridades"),
     ("Al cierre", "Cruzar el conteo ciego contra la cantidad del sistema.", "4 Conteo ciego"),
-    ("Últimos 20 min", "Devolver tres hechos con número y entregar la solicitud de datos.", "11 · 10"),
+    ("Últimos 20 min", "Devolver tres hechos con número y entregar la solicitud de datos firmada.", "11 · 10"),
 ]
 for mom, que, don in ruta:
     ws.cell(row=r, column=2, value=mom).font = f(9, True, TAPE)
@@ -254,22 +261,21 @@ for color, lab, txt in leyenda:
 r += 1
 ws.merge_cells(start_row=r, start_column=2, end_row=r + 2, end_column=5)
 c = ws.cell(row=r, column=2)
-c.value = ("Valores de referencia: los cortes usados en este archivo (85–90% de ocupación, 50% de desplazamiento en el "
-           "ciclo, 95% de ERI, 90 minutos de permanencia en muelle) son referencias de industria para CEDI de consumo "
-           "masivo con WMS y radiofrecuencia. Sirven para leer lo que midas hoy; conviértelos en meta solo después de "
-           "calibrarlos contra el histórico propio de Madrid.")
+c.value = ("Valores de referencia: los cortes usados en este archivo son referencias de industria para CEDI de consumo "
+           "masivo con WMS y radiofrecuencia. Sirven para leer lo que midas hoy y para ordenar por dónde empezar; "
+           "conviértelos en meta solo después de calibrarlos contra el histórico propio de Madrid.")
 c.font = f(9, color="6E7A86"); c.alignment = WRAP
 
-# =============================================== hojas en orden final
+# ---------------------------------------------- hojas en orden final
 rs = wb.create_sheet("Resumen")
 ck = wb.create_sheet("1 Checklist")
-oc = wb.create_sheet("2 Ocupación")
+oc = wb.create_sheet("2 Ocupación y piso")
 cp = wb.create_sheet("3 Ciclo picking")
 cg = wb.create_sheet("4 Conteo ciego")
-mu = wb.create_sheet("5 Muestreo")
-vh = wb.create_sheet("6 Vehículos")
-pp = wb.create_sheet("7 Pallets en piso")
-ag = wb.create_sheet("8 Agotados")
+rb = wb.create_sheet("5 Reabastecimiento")
+sp = wb.create_sheet("6 Seguimiento pedidos")
+pr = wb.create_sheet("7 Prioridades")
+mc = wb.create_sheet("8 Muelle y cargue")
 pg = wb.create_sheet("9 Preguntas")
 sd = wb.create_sheet("10 Solicitud datos")
 hz = wb.create_sheet("11 Hallazgos")
@@ -279,48 +285,40 @@ gl = wb.create_sheet("Glosario")
 W = [4, 17, 52, 44, 9, 9, 17, 26]; N = 8
 setup(ck, W, TAPE)
 r = titulo(ck, 1, N, "CHECKLIST DEL DÍA",
-           "Veinte acciones en el orden en que se hacen. Marca Sí en «Hecho»; el avance se calcula solo y aparece en Resumen.")
-ck.cell(row=3, column=3, value="AVANCE DEL CHECKLIST").font = f(9, True, "46525E")
-ck.cell(row=3, column=3).alignment = RGT
-cell = ck.cell(row=3, column=4, value='=IF(COUNTA($C$8:$C$27)=0,"",COUNTIF($D$8:$D$27,"Sí")/COUNTA($C$8:$C$27))')
-cell.number_format = "0%"; cell.font = f(13, True, NAVY_D); cell.alignment = CTR
-cell.fill = PatternFill("solid", fgColor=GREY_L); cell.border = BOX
-KEY["checklist"] = "'1 Checklist'!$D$3"
-
-r = tabla(ck, 7, ["#", "Bloque", "Acción", "Cómo se hace", "Hecho", "Hora", "Responsable", "Observación"])
+           "Las acciones en el orden en que se hacen. Marca Sí en «Hecho»; el avance se calcula solo y aparece en Resumen.")
 acciones = [
     ("Antes de bajarte", "Reunión de apertura de máximo 10 minutos, de pie.",
      "Si te sientas dos horas a ver presentaciones, cuando salgas el CEDI ya se organizó."),
-    ("Antes de bajarte", "Preguntar hora de corte de pedidos y del último camión.",
-     "Es el eje del día. Planea estar en despacho las tres horas previas al corte."),
+    ("Antes de bajarte", "Preguntar la hora de corte y cómo se programan las salidas.",
+     "¿Citas por ruta, corte único o mixto? Define contra qué se mide la secuencia. Anótalo en la hoja 7."),
     ("Antes de bajarte", "Anunciar: se mide el proceso, no a las personas.",
      "Dilo en el primer minuto y repítelo. Si creen que vienes a sancionar, los datos se dañan hoy."),
     ("Antes de bajarte", "Verificar EPP: botas, chaleco, casco si aplica.",
      "Llegar sin EPP cuesta 40 minutos de espera y credibilidad."),
-    ("Primeros 30 min", "Etiquetar con fecha y hora cada pallet que esté en piso.",
-     "Cinta de enmascarar y marcador. Foto del conjunto. Registra en la hoja 7."),
-    ("Primeros 30 min", "Abrir planilla de vehículos en portería.",
-     "Placa, hora de llegada, entrada a muelle y salida. Pide también los últimos 30 días."),
+    ("Primeros 30 min", "Barrido 1 de la cara de picking.",
+     "Hoja 5. Recorre las posiciones de picking y clasifica cada una: vacía, en riesgo u OK."),
+    ("Primeros 30 min", "Escoger 20 pedidos del día y anotar su hora de liberación.",
+     "Hoja 6. Escoge de rutas distintas y de horas distintas, no los que te sugieran."),
+    ("Primeros 30 min", "Etiquetar con fecha y hora el producto que esté fuera de posición.",
+     "Hoja 2, bloque B. Cinta y marcador. Foto del conjunto con la hora visible."),
     ("Primeros 30 min", "Encargar el conteo ciego de 100 ubicaciones.",
-     "Las eliges tú del listado. Quien cuenta no puede ver la cantidad del sistema."),
-    ("Primeros 30 min", "Seis fotos con hora de puntos fijos.",
-     "Muelle, staging, pasillo principal, picking, recepción, devoluciones. Repite en el pico y al cierre."),
+     "Hoja 4. Las eliges tú del listado. Quien cuenta no puede ver la cantidad del sistema."),
     ("Recorrido", "Recorrer a contracorriente: del muelle de salida hacia recepción.",
      "Ves el flujo como lo sufre el cliente y cada atasco te lleva a su causa aguas arriba."),
-    ("Recorrido", "Repetir el recorrido en el pico, antes del corte.",
-     "Hora valle y hora pico son dos CEDI distintos. El pico es donde nacen los errores."),
     ("Mediciones", "Contar ocupación en 5 pasillos elegidos al azar.",
      "Hoja 2. Trae las reglas para clasificar ocupada, parcial y vacía."),
     ("Mediciones", "Cronometrar el ciclo completo de 4 operarios.",
-     "Hoja 3. Dos operarios veteranos y dos con menos de 90 días."),
-    ("Mediciones", "Hacer una ronda de muestreo cada 20 minutos.",
-     "Hoja 5. Anota qué hace cada persona en ese instante exacto."),
-    ("Mediciones", "Dejar la planilla de agotados con un supervisor de picking.",
-     "Hoja 8. Explícale qué cuenta como agotado antes de entregársela."),
-    ("Mediciones", "Recoger la planilla de vehículos de portería.",
-     "Hoja 6. Escribe las horas en formato HH:MM."),
-    ("Mediciones", "Contar y fechar los pallets en piso por zona.",
-     "Hoja 7. Incluye lo que esté en pasillos de maniobra aunque digan que ya se va."),
+     "Hoja 3. Dos veteranos y dos con menos de 90 días."),
+    ("Mediciones", "Barrido 2 a media mañana y revisar si repusieron las vacías del barrido 1.",
+     "Hoja 5. Lo que siga vacío es la tasa de no-respuesta del reabastecimiento."),
+    ("Mediciones", "Ir anotando las horas de los 20 pedidos a lo largo del día.",
+     "Hoja 6. Alistamiento, chequeo, cargue y salida. Es el dato central del día."),
+    ("Pico", "Barrido 3, tres horas antes del corte. Es el más importante.",
+     "Hoja 5. Es el momento de mayor demanda sobre el reabastecimiento."),
+    ("Pico", "Observar staging y cargue: qué espera y por qué.",
+     "Hoja 8. Anota si el pedido estaba listo cuando llegó cada vehículo."),
+    ("Al cierre", "Reconstruir la secuencia de alistamiento frente al orden de salida.",
+     "Hoja 7. Alistar fuera de secuencia llena el staging y hace esperar a los camiones."),
     ("Al cierre", "Cruzar el conteo ciego contra la cantidad del sistema.",
      "Hoja 4. Hasta ahora quien contó no debió ver esa cifra."),
     ("Al cierre", "Escribir los hallazgos del día como hechos con número.",
@@ -330,102 +328,142 @@ acciones = [
     ("Al cierre", "Acordar una sola acción que empieza mañana y fijar la segunda visita.",
      "Una, no diez. Vuelve en otro día de la semana: el perfil de carga cambia."),
 ]
-r0 = 8
+CK1, CK2 = 8, 8 + len(acciones) - 1
+ck.cell(row=3, column=3, value="AVANCE DEL CHECKLIST").font = f(9, True, "46525E")
+ck.cell(row=3, column=3).alignment = RGT
+cell = ck.cell(row=3, column=4,
+    value='=IF(COUNTA($C${0}:$C${1})=0,"",COUNTIF($D${0}:$D${1},"Sí")/COUNTA($C${0}:$C${1}))'.format(CK1, CK2))
+cell.number_format = "0%"; cell.font = f(13, True, NAVY_D); cell.alignment = CTR
+cell.fill = PatternFill("solid", fgColor=GREY_L); cell.border = BOX
+KEY["checklist"] = "'1 Checklist'!$D$3"
+tabla(ck, 7, ["#", "Bloque", "Acción", "Cómo se hace", "Hecho", "Hora", "Responsable", "Observación"])
 for i, (bl, ac, como) in enumerate(acciones):
-    rr = r0 + i
+    rr = CK1 + i
     ck.cell(row=rr, column=1, value=i + 1)
     ck.cell(row=rr, column=2, value=bl)
     ck.cell(row=rr, column=3, value=ac)
     ck.cell(row=rr, column=4, value=como)
-cuerpo(ck, r0, r0 + 19, N, entrada=(5, 6, 7, 8), h=30)
-for rr in range(r0, r0 + 20):
+cuerpo(ck, CK1, CK2, N, entrada=(5, 6, 7, 8), h=30)
+for rr in range(CK1, CK2 + 1):
     ck.cell(row=rr, column=1).alignment = CTR
     ck.cell(row=rr, column=1).fill = PatternFill("solid", fgColor=GREY_H)
     ck.cell(row=rr, column=2).font = f(9, True, TAPE)
     ck.cell(row=rr, column=4).font = f(9, color="6E7A86")
     ck.cell(row=rr, column=5).alignment = CTR
-lista(ck, "D8:D27", ["Sí", "No"], "¿Ya lo hiciste?", "Elige Sí cuando la acción esté terminada. El avance se recalcula solo.")
-ayuda(ck, "E8:E27", "Hora", "Hora en que terminaste la acción, formato HH:MM.")
-ayuda(ck, "F8:F27", "Responsable", "Quién la ejecutó, si la delegaste.")
-ayuda(ck, "G8:G27", "Observación", "Qué encontraste o qué impidió hacerla.")
-ck.conditional_formatting.add("D8:D27", CellIsRule(operator="equal", formula=['"Sí"'],
+lista(ck, "D{}:D{}".format(CK1, CK2), ["Sí", "No"], "¿Ya lo hiciste?",
+      "Elige Sí cuando la acción esté terminada. El avance se recalcula solo.")
+ayuda(ck, "E{}:E{}".format(CK1, CK2), "Hora", "Hora en que terminaste la acción, formato HH:MM.")
+ayuda(ck, "F{}:F{}".format(CK1, CK2), "Responsable", "Quién la ejecutó, si la delegaste.")
+ayuda(ck, "G{}:G{}".format(CK1, CK2), "Observación", "Qué encontraste o qué impidió hacerla.")
+ck.conditional_formatting.add("D{}:D{}".format(CK1, CK2), CellIsRule(operator="equal", formula=['"Sí"'],
     fill=PatternFill("solid", fgColor=GRN_BG), font=f(10, True, GRN_T)))
-ck.freeze_panes = "A8"; ck.print_title_rows = "7:7"
-
-# ================================================================= 2 OCUPACIÓN
-W = [26, 13, 13, 13, 15, 14, 18, 34]; N = 8
+ck.freeze_panes = "A{}".format(CK1); ck.print_title_rows = "7:7"
+# ================================================================= 2 OCUPACIÓN Y PISO
+W = [28, 13, 13, 13, 15, 14, 18, 34]; N = 8
 setup(oc, W, TAPE)
-r = titulo(oc, 1, N, "2 · OCUPACIÓN REAL DE POSICIONES",
-           "Cuánto espacio queda de verdad y cuánto está bloqueado sin almacenar nada.")
+r = titulo(oc, 1, N, "2 · OCUPACIÓN DE POSICIONES Y PRODUCTO EN PISO",
+           "Cuánto espacio queda de verdad, cuánto está bloqueado sin almacenar nada y cuánto producto está fuera de posición.")
 r = bloque(oc, r, N, W,
-    "Saber si el CEDI está en congestión y cuánta capacidad está desperdiciada en posiciones a medio llenar.",
+    "Saber si el CEDI está en congestión, cuánta capacidad está desperdiciada en posiciones a medio llenar, y cuánto producto está en el piso sin ubicación.",
     "Tú solo. No necesitas que te acompañen — y es mejor que no lo hagan.",
-    "30 minutos.",
-    "El listado o el plano de pasillos, y esta hoja.",
-    ["Pide el listado de pasillos. Elige 5 al azar tú mismo: toma el primero, el que está a un tercio, el de la mitad, el de dos tercios y el último. No dejes que te sugieran cuáles ver.",
-     "Párate al inicio del pasillo y recórrelo contando las posiciones de un solo lado, módulo por módulo, de piso a techo.",
-     "Clasifica cada posición en una de tres: ocupada, parcial o vacía. Usa las reglas de abajo cuando dudes.",
-     "Repite del otro lado del pasillo y suma. Registra el pasillo completo en una sola fila.",
-     "Anota en «Observación» cualquier cosa rara: racks dañados, posiciones bloqueadas, producto sin rotular."],
-    ["OCUPADA: el hueco está lleno y no cabe otro pallet. Si un pallet sobredimensionado invade dos posiciones, cuenta 2 ocupadas.",
-     "PARCIAL: hay producto pero queda espacio útil desperdiciado — media estiba, dos cajas sueltas, un pallet bajo en un hueco alto. Regla práctica: si cabría más y no cabe por cómo está acomodado, es parcial.",
+    "30 minutos el conteo de pasillos, 40 minutos el etiquetado de piso.",
+    "El listado o plano de pasillos, cinta de enmascarar, marcador grueso y la cámara del celular.",
+    ["BLOQUE A. Pide el listado de pasillos y elige 5 al azar tú mismo: el primero, el de un tercio, el de la mitad, el de dos tercios y el último. No dejes que te sugieran cuáles ver.",
+     "Recorre cada pasillo contando las posiciones de un lado, módulo por módulo, de piso a techo. Clasifica cada una en ocupada, parcial o vacía.",
+     "Repite del otro lado y suma. Registra el pasillo completo en una sola fila.",
+     "BLOQUE B. Recorre las zonas donde haya producto fuera de posición: recepción, staging, pasillos de maniobra, devoluciones, averías, cuarentena.",
+     "Pega una etiqueta con FECHA Y HORA en cada pallet fuera de posición. No te saltes ninguno. Cuenta por zona y toma foto del conjunto con la hora visible.",
+     "VUELVE A LAS 48 HORAS, o pide foto de las mismas zonas, y marca cuáles siguen ahí con la etiqueta original. Eso es backlog real, ya no es «producto en tránsito»."],
+    ["OCUPADA: el hueco está lleno y no cabe otro pallet. Un pallet sobredimensionado que invade dos posiciones cuenta como 2 ocupadas.",
+     "PARCIAL: hay producto pero sobra espacio útil — media estiba, dos cajas sueltas, un pallet bajo en un hueco alto. Regla práctica: si cabría más y no cabe por cómo está acomodado, es parcial.",
      "VACÍA: no hay nada. Una posición reservada en el sistema pero físicamente vacía cuenta como vacía.",
-     "Posición bloqueada por daño o señalización: cuenta como ocupada y anótalo en Observación."],
-    ["¿Cuántas posiciones habilitadas tiene el CEDI y cuántas dice el sistema que están ocupadas hoy? Compara con tu conteo: la brecha es error del sistema.",
-     "¿Cuántas de esas posiciones tienen producto sin salidas en los últimos 90 días?",
-     "¿Cuándo fue la última consolidación de posiciones parciales y quién la ordena?",
+     "FUERA DE POSICIÓN: todo producto que no está en una ubicación del sistema. Incluye lo que esté en pasillos de maniobra aunque te digan «es que ya se va»: precisamente eso es lo que estás midiendo.",
+     "No cuentes como fuera de posición el producto en un muelle con vehículo cargando: eso sí es tránsito real."],
+    ["¿Cuántas posiciones habilitadas hay y cuántas dice el sistema que están ocupadas hoy? La brecha contra tu conteo es error del sistema.",
+     "¿Cuántas posiciones tienen producto sin salidas en los últimos 90 días?",
+     "¿Cuál es el dock-to-stock objetivo y cuál fue el real de la semana pasada?",
+     "¿Existe una regla de piso libre al cierre del turno y quién la verifica?",
      "¿Qué decisión de compra o de promoción explica el inventario que entró en las últimas 13 semanas?"])
-hdr = r
+r = banda(oc, r, N, "BLOQUE A — OCUPACIÓN DE POSICIONES", NAVY)
+hdrA = r
 r = tabla(oc, r, ["Pasillo / zona", "Ocupadas", "Parciales", "Vacías", "Total posiciones",
                   "% Ocupación", "% Capacidad fantasma", "Observación"])
-ej = r
-ejemplo(oc, ej, N, ["EJEMPLO ▸ Pasillo 12", 78, 14, 8, None, None, None, "3 posiciones con rack doblado"])
+ejA = r
+ejemplo(oc, ejA, N, ["EJEMPLO ▸ Pasillo 12", 78, 14, 8, None, None, None, "3 posiciones con rack doblado"])
 for col, fm in ((5, '=IF(SUM(B{0}:D{0})=0,"",SUM(B{0}:D{0}))'), (6, '=IF($E{0}="","",($B{0}+$C{0})/$E{0})'),
                 (7, '=IF($E{0}="","",$C{0}/$E{0})')):
-    oc.cell(row=ej, column=col, value=fm.format(ej))
-oc.cell(row=ej, column=6).number_format = "0.0%"; oc.cell(row=ej, column=7).number_format = "0.0%"
-d1, d2 = ej + 1, ej + 10
-for rr in range(d1, d2 + 1):
+    oc.cell(row=ejA, column=col, value=fm.format(ejA))
+oc.cell(row=ejA, column=6).number_format = "0.0%"; oc.cell(row=ejA, column=7).number_format = "0.0%"
+a1, a2 = ejA + 1, ejA + 10
+for rr in range(a1, a2 + 1):
     oc.cell(row=rr, column=5, value='=IF(SUM(B{0}:D{0})=0,"",SUM(B{0}:D{0}))'.format(rr))
     oc.cell(row=rr, column=6, value='=IF($E{0}="","",($B{0}+$C{0})/$E{0})'.format(rr))
     oc.cell(row=rr, column=7, value='=IF($E{0}="","",$C{0}/$E{0})'.format(rr))
-cuerpo(oc, d1, d2, N, entrada=(1, 2, 3, 4, 8), calc=(5, 6, 7), h=19)
-for rr in range(d1, d2 + 1):
-    for c_ in range(2, 8):
-        oc.cell(row=rr, column=c_).alignment = CTR
-    oc.cell(row=rr, column=6).number_format = "0.0%"
-    oc.cell(row=rr, column=7).number_format = "0.0%"
-tr = d2 + 1
-total_row(oc, tr, N, "TOTAL DE LA MUESTRA")
-for c_, fm in ((2, "=SUM(B{}:B{})"), (3, "=SUM(C{}:C{})"), (4, "=SUM(D{}:D{})"), (5, "=SUM(E{}:E{})")):
-    oc.cell(row=tr, column=c_, value=fm.format(d1, d2))
-oc.cell(row=tr, column=6, value='=IF($E${0}=0,"",($B${0}+$C${0})/$E${0})'.format(tr))
-oc.cell(row=tr, column=7, value='=IF($E${0}=0,"",$C${0}/$E${0})'.format(tr))
-oc.cell(row=tr, column=6).number_format = "0.0%"; oc.cell(row=tr, column=7).number_format = "0.0%"
-KEY["ocup"] = "'2 Ocupación'!$F${}".format(tr); KEY["fantasma"] = "'2 Ocupación'!$G${}".format(tr)
-oc.conditional_formatting.add("F{0}:F{0}".format(tr), CellIsRule(operator="greaterThan", formula=["0.9"],
+cuerpo(oc, a1, a2, N, entrada=(1, 2, 3, 4, 8), calc=(5, 6, 7), h=19)
+for rr in range(a1, a2 + 1):
+    for c_ in range(2, 8): oc.cell(row=rr, column=c_).alignment = CTR
+    oc.cell(row=rr, column=6).number_format = "0.0%"; oc.cell(row=rr, column=7).number_format = "0.0%"
+trA = a2 + 1
+total_row(oc, trA, N, "TOTAL DE LA MUESTRA")
+for c_, L in ((2, "B"), (3, "C"), (4, "D"), (5, "E")):
+    oc.cell(row=trA, column=c_, value="=SUM({0}{1}:{0}{2})".format(L, a1, a2))
+oc.cell(row=trA, column=6, value='=IF($E${0}=0,"",($B${0}+$C${0})/$E${0})'.format(trA))
+oc.cell(row=trA, column=7, value='=IF($E${0}=0,"",$C${0}/$E${0})'.format(trA))
+oc.cell(row=trA, column=6).number_format = "0.0%"; oc.cell(row=trA, column=7).number_format = "0.0%"
+KEY["ocup"] = "'2 Ocupación y piso'!$F${}".format(trA)
+KEY["fantasma"] = "'2 Ocupación y piso'!$G${}".format(trA)
+oc.conditional_formatting.add("F{0}:F{0}".format(trA), CellIsRule(operator="greaterThan", formula=["0.9"],
     fill=PatternFill("solid", fgColor=RED_BG), font=f(10.5, True, RED_T)))
-oc.conditional_formatting.add("F{0}:F{0}".format(tr), CellIsRule(operator="between", formula=["0.85", "0.9"],
+oc.conditional_formatting.add("F{0}:F{0}".format(trA), CellIsRule(operator="between", formula=["0.85", "0.9"],
     fill=PatternFill("solid", fgColor=AMB_BG), font=f(10.5, True, AMB_T)))
-ayuda(oc, "A{}:A{}".format(d1, d2), "Pasillo o zona", "Identifica el pasillo tal como está rotulado en piso (ej. Pasillo 12, Zona A).")
-ayuda(oc, "B{}:B{}".format(d1, d2), "Posiciones ocupadas", "El hueco está lleno: no cabe otro pallet. Un pallet que invade dos posiciones cuenta como 2.", "num")
-ayuda(oc, "C{}:C{}".format(d1, d2), "Posiciones parciales", "Hay producto pero sobra espacio útil: media estiba, dos cajas sueltas, pallet bajo en hueco alto.", "num")
-ayuda(oc, "D{}:D{}".format(d1, d2), "Posiciones vacías", "Sin nada. Una posición reservada en sistema pero físicamente vacía cuenta aquí.", "num")
-ayuda(oc, "H{}:H{}".format(d1, d2), "Observación", "Racks dañados, posiciones bloqueadas, producto sin rotular, cualquier cosa que llame la atención.")
-r = nota(oc, tr + 2, N,
-    "CÓMO SE LEE — Por encima de 85% cada punto adicional de ocupación cuesta cada vez más; por encima de 90% la operación "
-    "entra en congestión: doble manipulación, más búsqueda, más errores. Mientras estés ahí, cualquier medición de "
-    "productividad que tomes está contaminada. La capacidad fantasma es espacio que el sistema ve ocupado y no almacena "
-    "nada: se recupera consolidando, sin comprar un metro más.", W)
-oc.freeze_panes = "A{}".format(ej); oc.print_title_rows = "{0}:{0}".format(hdr)
+ayuda(oc, "A{}:A{}".format(a1, a2), "Pasillo o zona", "Identifica el pasillo tal como está rotulado en piso (ej. Pasillo 12, Zona A).")
+ayuda(oc, "B{}:B{}".format(a1, a2), "Posiciones ocupadas", "El hueco está lleno: no cabe otro pallet. Un pallet que invade dos posiciones cuenta como 2.", "num")
+ayuda(oc, "C{}:C{}".format(a1, a2), "Posiciones parciales", "Hay producto pero sobra espacio útil: media estiba, dos cajas sueltas, pallet bajo en hueco alto.", "num")
+ayuda(oc, "D{}:D{}".format(a1, a2), "Posiciones vacías", "Sin nada. Una posición reservada en sistema pero físicamente vacía cuenta aquí.", "num")
+ayuda(oc, "H{}:H{}".format(a1, a2), "Observación", "Racks dañados, posiciones bloqueadas, producto sin rotular, cualquier cosa que llame la atención.")
+
+r = banda(oc, trA + 2, N, "BLOQUE B — PRODUCTO FUERA DE POSICIÓN (PRUEBA DE LA ETIQUETA DE FECHA)", NAVY)
+hdrB = r
+for i, lab in enumerate(["Zona", "N.º de pallets etiquetados", "Producto / descripción",
+                         "Fecha de la etiqueta", "¿Sigue ahí a las 48 h?", "Observación"], start=1):
+    cc = oc.cell(row=r, column=i, value=lab)
+    cc.font = f(9, True, WHITE); cc.fill = PatternFill("solid", fgColor=NAVY); cc.alignment = CTRW; cc.border = BOX
+for c_ in (7, 8):
+    oc.cell(row=r, column=c_).fill = PatternFill(); oc.cell(row=r, column=c_).border = Border()
+oc.row_dimensions[r].height = 30
+ejB = r + 1
+ejemplo(oc, ejB, 6, ["EJ ▸ Recepción", 18, "Importado sin ubicar, 3 referencias", "24/08/2026", "Sí",
+                     "Llegó el contenedor el viernes"])
+b1, b2 = ejB + 1, ejB + 8
+zonas = ["Recepción", "Staging de despacho", "Pasillos de maniobra", "Devoluciones", "Averías",
+         "Cuarentena / pendiente de calidad", "Cross-dock", "Otro"]
+for i, z in enumerate(zonas): oc.cell(row=b1 + i, column=1, value=z)
+cuerpo(oc, b1, b2, 6, entrada=(1, 2, 3, 4, 5, 6), h=21)
+for rr in range(b1, b2 + 1):
+    for c_ in (2, 4, 5): oc.cell(row=rr, column=c_).alignment = CTR
+trB = b2 + 1
+total_row(oc, trB, 6, "TOTAL PALLETS FUERA DE POSICIÓN")
+oc.cell(row=trB, column=2, value='=IF(COUNT(B{0}:B{1})=0,"",SUM(B{0}:B{1}))'.format(b1, b2))
+KEY["pallets"] = "'2 Ocupación y piso'!$B${}".format(trB)
+lista(oc, "E{}:E{}".format(b1, b2), ["Sí", "No", "Parcial"], "¿Sigue ahí a las 48 h?",
+      "Se llena en la segunda visita. Sí = el mismo producto con la etiqueta original. Parcial = quedó una parte.")
+ayuda(oc, "B{}:B{}".format(b1, b2), "N.º de pallets", "Cuántos etiquetaste en esa zona. Si es producto apilado sin pallet, calcula el equivalente.", "num")
+ayuda(oc, "C{}:C{}".format(b1, b2), "Producto", "Qué es y de dónde viene. Ayuda a rastrear la causa después.")
+ayuda(oc, "D{}:D{}".format(b1, b2), "Fecha de la etiqueta", "La fecha que escribiste en la cinta. Formato DD/MM/AAAA.")
+r = nota(oc, trB + 2, N,
+    "CÓMO SE LEE — Por encima de 85% de ocupación cada punto cuesta cada vez más; por encima de 90% la operación entra en "
+    "congestión y cualquier medición de productividad que tomes queda contaminada. La capacidad fantasma es espacio que el "
+    "sistema ve ocupado y no almacena nada: se recupera consolidando, sin comprar un metro. Y lo que siga en piso a las "
+    "48 horas con la etiqueta original es backlog real, contable y fotografiable.", W)
+oc.freeze_panes = "A{}".format(ejA); oc.print_title_rows = "{0}:{0}".format(hdrA)
 
 # ================================================================= 3 CICLO PICKING
 W = [18, 13, 15, 15, 13, 14, 12, 12, 11, 11, 11, 11, 15, 26]; N = 14
 setup(cp, W, TAPE)
 r = titulo(cp, 1, N, "3 · CICLO DE ALISTAMIENTO",
-           "Si el tiempo se va caminando o alistando. Es la diferencia entre un problema de slotting y uno de método.")
+           "Si el tiempo se va caminando o alistando. Aquí también sale el denominador de los agotados de picking.")
 r = bloque(cp, r, N, W,
-    "Separar el tiempo que agrega valor (tomar producto) del que solo transporta al operario (caminar).",
+    "Separar el tiempo que agrega valor (tomar producto) del que solo transporta al operario, y contar cuántas veces se topa con una posición vacía.",
     "Tú, con cronómetro. Avisa al supervisor antes de empezar.",
     "2 horas: unos 30 minutos por operario.",
     "Cronómetro (el del celular sirve) y esta hoja.",
@@ -433,12 +471,12 @@ r = bloque(cp, r, N, W,
      "Dile: «voy a acompañarlo, trabaje normal, no estoy calificando a nadie». Camina detrás, nunca al lado ni adelante.",
      "Arranca el cronómetro cuando reciba la orden de alistamiento y párala cuando entregue el pedido terminado.",
      "Lleva dos tiempos por separado: CAMINANDO mientras se desplaza sin manipular, y TOMANDO mientras toma, cuenta, empaca, rotula o escanea.",
-     "Cuenta las líneas del pedido y marca una raya cada vez que ocurra una incidencia (no encontró, posición vacía, devolvió, preguntó).",
+     "Cuenta las líneas del pedido y marca una raya por cada incidencia. La columna «posición vacía» es la que alimenta el indicador de agotados por 100 líneas.",
      "Observa una cosa más y anótala: si lee el scanner en cada línea o se lo salta."],
     ["El viaje de regreso al punto de partida CUENTA como caminando.",
      "Buscar parado frente a la posición cuenta como TOMANDO (es una toma fallida). Si se va a otra posición a buscar, cuenta como CAMINANDO.",
      "Si lo interrumpen (montacargas, supervisor, llamada), pausa el cronómetro y anótalo en Observación.",
-     "«No encontró» es que el producto no estaba donde el sistema decía. «Posición vacía» es que estaba agotada en picking. No son lo mismo.",
+     "«No encontró» es que el producto no estaba donde el sistema decía. «Posición vacía» es que estaba agotada en picking. No son lo mismo y no se mezclan.",
      "Un solo ciclo por operario basta. Cuatro operarios distintos valen más que cuatro ciclos del mismo."],
     ["¿Cuándo fue el último re-slotting y con qué criterio se hizo?",
      "¿Los 50 SKU de mayor rotación están en la zona dorada, entre cintura y hombro y cerca del muelle?",
@@ -462,27 +500,28 @@ for rr in range(d1, d2 + 1):
     cp.cell(row=rr, column=8, value='=IF(OR($E{0}="",$G{0}=""),"",IFERROR($E{0}/$G{0},""))'.format(rr))
 cuerpo(cp, d1, d2, N, entrada=(1, 2, 3, 4, 7, 9, 10, 11, 12, 13, 14), calc=(5, 6, 8), h=19)
 for rr in range(d1, d2 + 1):
-    for c_ in range(2, 14):
-        cp.cell(row=rr, column=c_).alignment = CTR
+    for c_ in range(2, 14): cp.cell(row=rr, column=c_).alignment = CTR
     cp.cell(row=rr, column=6).number_format = "0.0%"; cp.cell(row=rr, column=8).number_format = "0.0"
 tr = d2 + 1
 total_row(cp, tr, N, "TOTAL / PROMEDIO PONDERADO")
 for c_ in (3, 4, 5, 7, 9, 10, 11, 12):
     L = get_column_letter(c_)
     cp.cell(row=tr, column=c_, value='=IF(SUM({0}{1}:{0}{2})=0,"",SUM({0}{1}:{0}{2}))'.format(L, d1, d2))
-cp.cell(row=tr, column=6, value='=IF(SUM($E${1}:$E${2})=0,"",SUM($C${1}:$C${2})/SUM($E${1}:$E${2}))'.format(0, d1, d2))
-cp.cell(row=tr, column=8, value='=IF(OR(SUM($E${1}:$E${2})=0,SUM($G${1}:$G${2})=0),"",SUM($E${1}:$E${2})/SUM($G${1}:$G${2}))'.format(0, d1, d2))
+cp.cell(row=tr, column=6, value='=IF(SUM($E${0}:$E${1})=0,"",SUM($C${0}:$C${1})/SUM($E${0}:$E${1}))'.format(d1, d2))
+cp.cell(row=tr, column=8, value='=IF(OR(SUM($E${0}:$E${1})=0,SUM($G${0}:$G${1})=0),"",SUM($E${0}:$E${1})/SUM($G${0}:$G${1}))'.format(d1, d2))
 cp.cell(row=tr, column=6).number_format = "0.0%"; cp.cell(row=tr, column=8).number_format = "0.0"
 KEY["desp"] = "'3 Ciclo picking'!$F${}".format(tr)
+KEY["ciclo_vacias"] = "'3 Ciclo picking'!$J${}:$J${}".format(d1, d2)
+KEY["ciclo_lineas"] = "'3 Ciclo picking'!$G${}:$G${}".format(d1, d2)
 cp.conditional_formatting.add("F{0}:F{0}".format(tr), CellIsRule(operator="greaterThan", formula=["0.5"],
     fill=PatternFill("solid", fgColor=RED_BG), font=f(10.5, True, RED_T)))
 ayuda(cp, "A{}:A{}".format(d1, d2), "Operario", "Nombre o código. Anota también el puesto si alista en más de una zona.")
 ayuda(cp, "B{}:B{}".format(d1, d2), "Antigüedad", "Cuánto lleva en el cargo. Menos de 90 días explica buena parte de los errores.")
-ayuda(cp, "C{}:C{}".format(d1, d2), "Segundos caminando", "Tiempo desplazándose sin manipular producto. El regreso al punto de partida cuenta aquí.", "num")
+ayuda(cp, "C{}:C{}".format(d1, d2), "Segundos caminando", "Desplazándose sin manipular producto. El regreso al punto de partida cuenta aquí.", "num")
 ayuda(cp, "D{}:D{}".format(d1, d2), "Segundos tomando", "Tomar, contar, empacar, rotular, escanear. Buscar parado frente a la posición cuenta aquí.", "num")
-ayuda(cp, "G{}:G{}".format(d1, d2), "Líneas del pedido", "Cuántas referencias distintas tenía el pedido que alistó en ese ciclo.", "num")
+ayuda(cp, "G{}:G{}".format(d1, d2), "Líneas del pedido", "Cuántas referencias distintas tenía el pedido de ese ciclo. Es el denominador de los agotados.", "num")
 for col, t_, m_ in (("I", "No encontró", "Veces que el producto no estaba donde el sistema decía."),
-                    ("J", "Posición vacía", "Veces que la posición de picking estaba agotada."),
+                    ("J", "Posición vacía", "Veces que la posición de picking estaba agotada. Alimenta el indicador de agotados por 100 líneas."),
                     ("K", "Devolvió", "Veces que tuvo que devolver producto ya tomado."),
                     ("L", "Preguntó", "Veces que tuvo que preguntarle algo a alguien para continuar.")):
     ayuda(cp, "{0}{1}:{0}{2}".format(col, d1, d2), t_, m_, "num")
@@ -490,8 +529,8 @@ lista(cp, "M{}:M{}".format(d1, d2), ["Sí", "No", "Parcial"], "¿Escaneó cada l
       "Sí = leyó el scanner en todas. Parcial = en algunas. No = trabajó de memoria o por lista.")
 r = nota(cp, tr + 2, N,
     "CÓMO SE LEE — Si caminar pasa del 50% del ciclo, el problema es el slotting y no la gente: correr más rápido no arregla "
-    "una ruta mal diseñada. Las incidencias de «no encontró» y «posición vacía» apuntan a exactitud de inventario y a "
-    "reabastecimiento. Si el operario se salta el escaneo, ningún control posterior va a sostener la calidad del despacho.", W)
+    "una ruta mal diseñada. La columna «posición vacía» se cruza con «líneas» en la hoja 5 para dar agotados por cada 100 "
+    "líneas, que es el indicador con denominador. Si el operario se salta el escaneo, ningún control posterior sostiene la calidad.", W)
 cp.freeze_panes = "B{}".format(ej); cp.print_title_rows = "{0}:{0}".format(hdr)
 
 # ================================================================= 4 CONTEO CIEGO
@@ -519,9 +558,8 @@ r = bloque(cg, r, N, W,
      "¿Quién tiene permiso para ajustar inventario en el sistema y con qué autorización?",
      "¿Cuántos ajustes de inventario se hicieron el mes pasado y por qué causal?"])
 lab_r = r
-for ref, txt in (("A", "Ubicaciones contadas"), ("C", "Exactas"), ("E", "ERI por ubicación")):
-    cc = cg.cell(row=lab_r, column={"A": 1, "C": 3, "E": 5}[ref], value=txt)
-    cc.font = f(9, True, "46525E"); cc.alignment = RGT
+for col, txt in ((1, "Ubicaciones contadas"), (3, "Exactas"), (5, "ERI por ubicación")):
+    cc = cg.cell(row=lab_r, column=col, value=txt); cc.font = f(9, True, "46525E"); cc.alignment = RGT
 hdr = lab_r + 2
 d1, d2 = hdr + 2, hdr + 101
 cg.cell(row=lab_r, column=2, value='=COUNTIF($F${0}:$F${1},"SÍ")+COUNTIF($F${0}:$F${1},"NO")'.format(d1, d2))
@@ -546,8 +584,7 @@ for i, rr in enumerate(range(d1, d2 + 1), start=1):
     cg.cell(row=rr, column=7, value='=IF(OR($D{0}="",$E{0}=""),"",$D{0}-$E{0})'.format(rr))
 cuerpo(cg, d1, d2, N, entrada=(2, 3, 4, 5, 8), calc=(6, 7), h=16)
 for rr in range(d1, d2 + 1):
-    for c_ in (1, 4, 5, 6, 7):
-        cg.cell(row=rr, column=c_).alignment = CTR
+    for c_ in (1, 4, 5, 6, 7): cg.cell(row=rr, column=c_).alignment = CTR
     cg.cell(row=rr, column=1).fill = PatternFill("solid", fgColor=GREY_H)
     cg.cell(row=rr, column=1).font = f(9, color="8C949C")
 cg.conditional_formatting.add("F{}:F{}".format(d1, d2), CellIsRule(operator="equal", formula=['"NO"'],
@@ -558,258 +595,471 @@ ayuda(cg, "D{}:D{}".format(d1, d2), "Cantidad contada", "Lo que hay físicamente
 ayuda(cg, "E{}:E{}".format(d1, d2), "Cantidad del sistema", "SE LLENA AL FINAL DEL DÍA, nunca antes. Si se llena antes, el conteo deja de ser ciego.", "num")
 ayuda(cg, "H{}:H{}".format(d1, d2), "Observación", "SKU distinto al esperado, producto sin rotular, lote vencido, ubicación mal marcada.")
 cg.freeze_panes = "A{}".format(ej); cg.print_title_rows = "{0}:{0}".format(hdr)
+# ================================================================= 5 REABASTECIMIENTO
+W = [14, 10, 26, 18, 12, 13, 10, 12, 14, 30]; N = 10
+setup(rb, W, TAPE)
+r = titulo(rb, 1, N, "5 · REABASTECIMIENTO Y AGOTADOS DE PICKING",
+           "Si el reabastecimiento va adelante o detrás del alistamiento. Se mide con barridos que haces tú, sin depender de que nadie lleve un registro.")
+r = bloque(rb, r, N, W,
+    "Saber cuántas posiciones de picking están vacías o a punto de agotarse, cómo evoluciona eso durante el día, y cuántas veces un operario se topa con una posición vacía por cada 100 líneas.",
+    "Tú solo. No necesitas que un supervisor registre nada durante el turno.",
+    "20 minutos por barrido. Tres barridos en el día.",
+    "Esta hoja y el recorrido de la cara de picking.",
+    ["BARRIDO 1 — al inicio del turno. Recorre la cara de picking zona por zona y clasifica cada posición: vacía, en riesgo u OK. Anota una fila por zona.",
+     "Anota en el bloque B las posiciones que encuentres vacías con pedido pendiente: hora, ubicación y SKU. Son los agotados observados.",
+     "BARRIDO 2 — a media mañana. Repite el recorrido. Al pasar por las posiciones que estaban vacías en el barrido 1, mira si ya las repusieron y márcalo en el bloque B.",
+     "BARRIDO 3 — tres horas antes del corte. Es el más importante: es el momento de mayor demanda sobre el reabastecimiento.",
+     "El resumen por barrido y el deterioro entre el primero y el tercero se calculan solos. El bloque C cruza automáticamente con la hoja 3 para dar agotados por cada 100 líneas."],
+    ["VACÍA: no hay nada en la posición de picking.",
+     "EN RIESGO: queda menos de lo que ese SKU saca en una hora. Si no sabes la rotación, usa la regla de la caja: queda una caja o menos.",
+     "OK: hay inventario suficiente para el resto de la jornada.",
+     "Cuenta solo posiciones de la CARA DE PICKING, no de almacenamiento en altura.",
+     "Usa siempre el mismo recorrido y las mismas zonas en los tres barridos. Si cambias el recorrido, los barridos dejan de ser comparables.",
+     "En el bloque B, un agotado cuenta aunque lo repongan a los dos minutos: lo que mides es la frecuencia, no la gravedad."],
+    ["¿El reabastecimiento se hace en ola antes del turno o a demanda, según se va agotando?",
+     "¿Existe un punto de reorden por posición de picking o se hace a criterio del reabastecedor?",
+     "¿Cuántas personas reabastecen frente a cuántas alistan?",
+     "¿Quién decide la prioridad cuando hay cinco posiciones vacías al mismo tiempo?",
+     "¿El sistema avisa cuándo una posición de picking está por agotarse, o alguien tiene que verlo?"])
+r = banda(rb, r, N, "BLOQUE A — BARRIDOS DE LA CARA DE PICKING", NAVY)
+hdrA = r
+r = tabla(rb, r, ["Barrido", "Hora", "Zona", "Posiciones revisadas", "Vacías", "En riesgo", "OK",
+                  "% vacías", "% en riesgo", "Observación"])
+ejA = r
+ejemplo(rb, ejA, N, ["Barrido 1", "06:40", "EJEMPLO ▸ Picking pasillo A", 120, 6, 14, None, None, None,
+                     "Dos SKU sin reponer desde ayer"])
+rb.cell(row=ejA, column=7, value='=IF($D{0}="","",$D{0}-$E{0}-$F{0})'.format(ejA))
+rb.cell(row=ejA, column=8, value='=IF(OR($D{0}="",$D{0}=0),"",$E{0}/$D{0})'.format(ejA))
+rb.cell(row=ejA, column=9, value='=IF(OR($D{0}="",$D{0}=0),"",($E{0}+$F{0})/$D{0})'.format(ejA))
+rb.cell(row=ejA, column=8).number_format = "0.0%"; rb.cell(row=ejA, column=9).number_format = "0.0%"
+a1, a2 = ejA + 1, ejA + 12
+for rr in range(a1, a2 + 1):
+    rb.cell(row=rr, column=7, value='=IF($D{0}="","",$D{0}-$E{0}-$F{0})'.format(rr))
+    rb.cell(row=rr, column=8, value='=IF(OR($D{0}="",$D{0}=0),"",$E{0}/$D{0})'.format(rr))
+    rb.cell(row=rr, column=9, value='=IF(OR($D{0}="",$D{0}=0),"",($E{0}+$F{0})/$D{0})'.format(rr))
+cuerpo(rb, a1, a2, N, entrada=(1, 2, 3, 4, 5, 6, 10), calc=(7, 8, 9), h=18)
+for rr in range(a1, a2 + 1):
+    for c_ in (1, 2, 4, 5, 6, 7, 8, 9): rb.cell(row=rr, column=c_).alignment = CTR
+    rb.cell(row=rr, column=8).number_format = "0.0%"; rb.cell(row=rr, column=9).number_format = "0.0%"
+lista(rb, "A{}:A{}".format(a1, a2), ["Barrido 1", "Barrido 2", "Barrido 3"], "Número del barrido",
+      "Barrido 1 = inicio de turno · Barrido 2 = media mañana · Barrido 3 = tres horas antes del corte. Usa el mismo recorrido en los tres.")
+ayuda(rb, "B{}:B{}".format(a1, a2), "Hora", "Hora en que hiciste ese tramo del barrido, formato HH:MM.")
+ayuda(rb, "C{}:C{}".format(a1, a2), "Zona", "Zona o pasillo de la cara de picking. Usa el mismo nombre en los tres barridos.")
+ayuda(rb, "D{}:D{}".format(a1, a2), "Posiciones revisadas", "Cuántas posiciones de picking recorriste en esa zona.", "num")
+ayuda(rb, "E{}:E{}".format(a1, a2), "Vacías", "Sin nada de producto en la posición de picking.", "num")
+ayuda(rb, "F{}:F{}".format(a1, a2), "En riesgo", "Queda menos de lo que ese SKU saca en una hora. Sin dato de rotación: queda una caja o menos.", "num")
 
-# ================================================================= 5 MUESTREO
-W = [9, 10, 24, 20, 3, 22, 15, 11, 30]; N = 9
-setup(mu, W, TAPE)
-r = titulo(mu, 1, N, "5 · MUESTREO DE TRABAJO",
-           "Qué proporción del día agrega valor. Convierte «la gente no rinde» en «el diseño no deja rendir».")
-r = bloque(mu, r, N, W,
-    "Estimar cómo se reparte el tiempo real de la operación entre alistar, caminar, buscar, esperar y reprocesar.",
-    "Tú, o alguien ajeno al área. Avisa al supervisor para que no se lea como vigilancia.",
-    "Todo el día, pero solo 2 minutos cada 20.",
-    "Un punto alto o despejado desde donde veas varias personas a la vez.",
-    ["Escoge un punto donde alcances a ver varias personas al mismo tiempo: un altillo, el final de un pasillo, la plataforma de un muelle.",
-     "Cada 20 minutos mira UNA sola vez y anota qué está haciendo cada persona EN ESE INSTANTE EXACTO. No lo que venía haciendo ni lo que va a hacer.",
-     "Una fila por persona y por ronda. Con 12 rondas y 15 personas llegas a 180 observaciones, que es una muestra válida.",
-     "Anota el puesto o la zona, nunca el nombre. Esto mide el proceso, no a las personas.",
-     "El resumen de la derecha se llena solo a medida que registras."],
-    ["ALISTANDO: tomar, contar, empacar, rotular, escanear. Es lo único que agrega valor al pedido.",
-     "REABASTECIENDO: mover producto hacia posición de picking. Necesario, pero no agrega valor al pedido.",
-     "CAMINANDO: desplazarse, con o sin producto, sin manipular.",
-     "BUSCANDO: parado mirando, revisando pantalla o preguntando dónde está algo.",
-     "ESPERANDO: quieto por falta de producto, de equipo, de documento o de instrucción.",
-     "REPROCESANDO: corregir, devolver o rehacer un pedido ya alistado.",
-     "OTRO: conversar, baño, descanso o actividad ajena a la operación. No lo escondas: distorsiona la muestra."],
-    ["¿Existe un estándar de líneas por hora y el operario lo conoce?",
-     "¿Cada cuánto se reabastece la zona de picking y quién decide cuándo?",
-     "¿Qué hace un operario cuando se queda sin trabajo asignado?",
-     "¿Cuántas veces al día se detiene la operación por falta de equipo o de montacargas?"])
-hdr = r
-tabla(mu, hdr, ["Ronda", "Hora", "Puesto / zona", "Actividad", "", "Actividad", "Observaciones", "%", "Nota"])
-for cl in ("E", "I"):
-    cell = mu["{}{}".format(cl, hdr)]
-    cell.value = None; cell.fill = PatternFill(); cell.border = Border()
-mu.cell(row=hdr, column=9, value="Nota").fill = PatternFill("solid", fgColor=NAVY)
-mu.cell(row=hdr, column=9).font = f(9, True, WHITE); mu.cell(row=hdr, column=9).border = BOX
-mu.cell(row=hdr, column=9).alignment = CTRW
-ej = hdr + 1
-ejemplo(mu, ej, 4, [1, "09:20", "Picking pasillo 8", "Caminando"])
-d1, d2 = ej + 1, ej + 200
-cuerpo(mu, d1, d2, 4, entrada=(1, 2, 3, 4), h=15)
-for rr in range(d1, d2 + 1):
-    for c_ in (1, 2, 4):
-        mu.cell(row=rr, column=c_).alignment = CTR
-acts = ["Alistando", "Reabasteciendo", "Caminando", "Buscando", "Esperando", "Reprocesando", "Otro"]
-lista(mu, "D{}:D{}".format(d1, d2), acts, "Actividad en ese instante",
-      "Elige de la lista. Alistando es lo único que agrega valor; reabastecer es necesario pero no agrega valor al pedido.")
-ayuda(mu, "A{}:A{}".format(d1, d2), "Ronda", "Número de la ronda (1, 2, 3...). Una ronda cada 20 minutos.", "num")
-ayuda(mu, "B{}:B{}".format(d1, d2), "Hora", "Hora de la ronda, formato HH:MM.")
-ayuda(mu, "C{}:C{}".format(d1, d2), "Puesto o zona", "El puesto o la zona, NUNCA el nombre. Esto mide el proceso, no a las personas.")
-s0 = ej
-for i, a in enumerate(acts):
-    rr = s0 + i
-    mu.cell(row=rr, column=6, value=a).font = f(10)
-    mu.cell(row=rr, column=7, value='=COUNTIF($D${0}:$D${1},$F{2})'.format(d1, d2, rr))
-    mu.cell(row=rr, column=8, value='=IF($G${0}=0,"",$G{1}/$G${0})'.format(s0 + 7, rr))
-    for c_ in (6, 7, 8):
-        cell = mu.cell(row=rr, column=c_); cell.border = BOX
+r = banda(rb, a2 + 2, N, "RESUMEN POR BARRIDO", TAPE)
+hs = r
+for i, lab in enumerate(["Barrido", "Posiciones revisadas", "Vacías", "En riesgo", "% en riesgo"], start=1):
+    cc = rb.cell(row=hs, column=i, value=lab)
+    cc.font = f(9, True, WHITE); cc.fill = PatternFill("solid", fgColor=NAVY); cc.alignment = CTRW; cc.border = BOX
+rb.row_dimensions[hs].height = 26
+s1 = hs + 1
+etiquetas = ["Barrido 1 — Inicio de turno", "Barrido 2 — Media mañana", "Barrido 3 — Antes del corte"]
+for i in range(3):
+    rr = s1 + i
+    rb.cell(row=rr, column=1, value=etiquetas[i])
+    rb.cell(row=rr, column=2, value='=SUMIF($A${0}:$A${1},"Barrido {2}",$D${0}:$D${1})'.format(a1, a2, i + 1))
+    rb.cell(row=rr, column=3, value='=SUMIF($A${0}:$A${1},"Barrido {2}",$E${0}:$E${1})'.format(a1, a2, i + 1))
+    rb.cell(row=rr, column=4, value='=SUMIF($A${0}:$A${1},"Barrido {2}",$F${0}:$F${1})'.format(a1, a2, i + 1))
+    rb.cell(row=rr, column=5, value='=IF($B{0}=0,"",($C{0}+$D{0})/$B{0})'.format(rr))
+    for c_ in range(1, 6):
+        cell = rb.cell(row=rr, column=c_); cell.border = BOX; cell.font = f(10)
         cell.fill = PatternFill("solid", fgColor=GREY_L)
-        if c_ > 6: cell.alignment = CTR
-    mu.cell(row=rr, column=8).number_format = "0.0%"
-tot = s0 + 7
-mu.cell(row=tot, column=6, value="TOTAL OBSERVACIONES")
-mu.cell(row=tot, column=7, value="=SUM($G${}:$G${})".format(s0, s0 + 6))
-for c_ in (6, 7, 8):
-    cell = mu.cell(row=tot, column=c_); cell.border = BOX; cell.font = f(10, True, NAVY_D)
-    cell.fill = PatternFill("solid", fgColor=GREY_H)
-    if c_ > 6: cell.alignment = CTR
-nv = tot + 2
-mu.cell(row=nv, column=6, value="NO AGREGA VALOR")
-mu.cell(row=nv, column=7, value="=SUM($G${}:$G${})".format(s0 + 2, s0 + 6))
-mu.cell(row=nv, column=8, value='=IF($G${0}=0,"",$G${1}/$G${0})'.format(tot, nv))
-for c_ in (6, 7, 8):
-    cell = mu.cell(row=nv, column=c_); cell.border = BOX; cell.font = f(11, True, RED_T)
-    cell.fill = PatternFill("solid", fgColor=GREY_L)
-    if c_ > 6: cell.alignment = CTR
-mu.cell(row=nv, column=8).number_format = "0.0%"
-KEY["novalor"] = "'5 Muestreo'!$H${}".format(nv)
-mu.conditional_formatting.add("H{0}:H{0}".format(nv), CellIsRule(operator="greaterThan", formula=["0.5"],
-    fill=PatternFill("solid", fgColor=RED_BG), font=f(11, True, RED_T)))
-mu.merge_cells(start_row=nv + 2, start_column=6, end_row=nv + 5, end_column=9)
-c = mu.cell(row=nv + 2, column=6)
-c.value = ("CÓMO SE LEE — En CEDI sin estándares de trabajo es normal encontrar 30–45% del tiempo en desplazamiento y "
-           "10–20% buscando. Si «no agrega valor» pasa del 50%, más de la mitad del día se está yendo en el diseño de la "
-           "operación, no en el esfuerzo de la gente.")
-c.font = f(9, color="6E7A86"); c.alignment = WRAP
-mu.freeze_panes = "A{}".format(ej); mu.print_title_rows = "{0}:{0}".format(hdr)
+        cell.alignment = CTR if c_ > 1 else Alignment(vertical="center", indent=1)
+    rb.cell(row=rr, column=5).number_format = "0.0%"
+    rb.row_dimensions[rr].height = 19
+rb.cell(row=s1 + 2, column=5).font = f(12, True, NAVY_D)
+KEY["riesgo"] = "'5 Reabastecimiento'!$E${}".format(s1 + 2)
+rb.conditional_formatting.add("E{0}:E{0}".format(s1 + 2), CellIsRule(operator="greaterThan", formula=["0.2"],
+    fill=PatternFill("solid", fgColor=RED_BG), font=f(12, True, RED_T)))
+det = s1 + 4
+rb.cell(row=det, column=1, value="DETERIORO DURANTE EL DÍA").font = f(10, True, NAVY_D)
+rb.merge_cells(start_row=det, start_column=1, end_row=det, end_column=4)
+rb.cell(row=det, column=1).alignment = RGT
+cell = rb.cell(row=det, column=5, value='=IF(OR($E${0}="",$E${1}=""),"",$E${1}-$E${0})'.format(s1, s1 + 2))
+cell.number_format = "+0.0%;-0.0%;0.0%"; cell.font = f(12, True); cell.alignment = CTR
+cell.fill = PatternFill("solid", fgColor=GREY_L); cell.border = BOX
+rb.conditional_formatting.add("E{0}:E{0}".format(det), CellIsRule(operator="greaterThan", formula=["0"],
+    fill=PatternFill("solid", fgColor=RED_BG), font=f(12, True, RED_T)))
+rb.conditional_formatting.add("E{0}:E{0}".format(det), CellIsRule(operator="lessThanOrEqual", formula=["0"],
+    fill=PatternFill("solid", fgColor=GRN_BG), font=f(12, True, GRN_T)))
+r = nota(rb, det + 1, N,
+    "Positivo significa que el día empeora: el reabastecimiento va detrás del alistamiento. Negativo o cero significa que "
+    "va adelante y aguanta el pico.", W)
 
-# ================================================================= 6 VEHÍCULOS
-W = [14, 22, 15, 19, 14, 14, 14, 20, 28]; N = 9
-setup(vh, W, TAPE)
-r = titulo(vh, 1, N, "6 · PERMANENCIA DE VEHÍCULOS EN MUELLE",
-           "Si el cuello de botella está en el muelle, en la programación de citas o en el alistamiento.")
-r = bloque(vh, r, N, W,
-    "Medir cuánto tiempo pierde un vehículo entre que llega y que sale, y en qué parte se pierde.",
-    "Portería registra durante el día; tú recoges la planilla al cierre.",
-    "2 minutos por vehículo para portería. 15 minutos para ti al final.",
-    "Una planilla en portería y el reloj de la garita.",
-    ["Pide en portería que registren cada vehículo del día con tres horas: llegada a portería, entrada al muelle y salida.",
-     "Si ya llevan ese registro, pide además los últimos 30 días: te da la tendencia sin esperar.",
-     "Al cierre del día recoge la planilla y pásala a esta hoja.",
-     "Pregunta por los vehículos que llegaron antes que tú y complétalos con el dato de portería.",
-     "Los minutos de espera, cargue y permanencia se calculan solos."],
+r = banda(rb, r + 1, N, "BLOQUE B — AGOTADOS OBSERVADOS", NAVY)
+hdrB = r
+for i, lab in enumerate(["Hora", "Zona", "Ubicación", "SKU", "¿Había pedido pendiente?",
+                         "¿Seguía vacía en el barrido siguiente?", "Min hasta reponer", "Observación"], start=1):
+    cc = rb.cell(row=hdrB, column=i, value=lab)
+    cc.font = f(9, True, WHITE); cc.fill = PatternFill("solid", fgColor=NAVY); cc.alignment = CTRW; cc.border = BOX
+for c_ in (9, 10):
+    rb.cell(row=hdrB, column=c_).fill = PatternFill(); rb.cell(row=hdrB, column=c_).border = Border()
+rb.row_dimensions[hdrB].height = 32
+ejB = hdrB + 1
+ejemplo(rb, ejB, 8, ["08:15", "Picking A", "A-04-01-A", "SKU 100482", "Sí", "Sí", 95, "El operario siguió con otra línea"])
+b1, b2 = ejB + 1, ejB + 15
+cuerpo(rb, b1, b2, 8, entrada=(1, 2, 3, 4, 5, 6, 7, 8), h=16)
+for rr in range(b1, b2 + 1):
+    for c_ in (1, 5, 6, 7): rb.cell(row=rr, column=c_).alignment = CTR
+trB = b2 + 1
+total_row(rb, trB, 8, "EVENTOS OBSERVADOS")
+rb.cell(row=trB, column=4, value='=IF(COUNTA(D{0}:D{1})=0,"",COUNTA(D{0}:D{1}))'.format(b1, b2))
+rb.cell(row=trB, column=5, value="No repuestas")
+rb.cell(row=trB, column=6, value='=IF((COUNTIF($F${0}:$F${1},"Sí")+COUNTIF($F${0}:$F${1},"No"))=0,"",COUNTIF($F${0}:$F${1},"Sí")/(COUNTIF($F${0}:$F${1},"Sí")+COUNTIF($F${0}:$F${1},"No")))'.format(b1, b2))
+rb.cell(row=trB, column=6).number_format = "0.0%"
+for c_ in (5,):
+    rb.cell(row=trB, column=c_).font = f(9, True, "46525E"); rb.cell(row=trB, column=c_).alignment = RGT
+lista(rb, "E{}:E{}".format(b1, b2), ["Sí", "No", "No sé"], "¿Había pedido pendiente?",
+      "Sí = un operario necesitaba ese SKU en ese momento. Es lo que convierte una posición vacía en un agotado real.")
+lista(rb, "F{}:F{}".format(b1, b2), ["Sí", "No"], "¿Seguía vacía en el barrido siguiente?",
+      "Se llena en el barrido posterior. Sí = no la repusieron. Es la tasa de no-respuesta del reabastecimiento.")
+ayuda(rb, "A{}:A{}".format(b1, b2), "Hora", "Hora en que la encontraste vacía, formato HH:MM.")
+ayuda(rb, "D{}:D{}".format(b1, b2), "SKU", "Referencia agotada. Si un mismo SKU se repite, ese punto de reorden está mal puesto.")
+ayuda(rb, "G{}:G{}".format(b1, b2), "Min hasta reponer", "Desde que la viste vacía hasta que llegó el producto. Si no lo sabes, déjalo vacío.", "num")
+
+r = banda(rb, trB + 2, N, "BLOQUE C — AGOTADOS POR CADA 100 LÍNEAS (se calcula solo desde la hoja 3)", NAVY)
+c1_ = r
+rb.merge_cells(start_row=c1_, start_column=1, end_row=c1_, end_column=3)
+rb.cell(row=c1_, column=1, value="Posiciones vacías encontradas en los ciclos cronometrados").font = f(10)
+rb.cell(row=c1_, column=1).alignment = RGT
+rb.cell(row=c1_, column=4, value='=IF(SUM({0})=0,"",SUM({0}))'.format(KEY["ciclo_vacias"]))
+rb.merge_cells(start_row=c1_ + 1, start_column=1, end_row=c1_ + 1, end_column=3)
+rb.cell(row=c1_ + 1, column=1, value="Líneas alistadas en esos mismos ciclos").font = f(10)
+rb.cell(row=c1_ + 1, column=1).alignment = RGT
+rb.cell(row=c1_ + 1, column=4, value='=IF(SUM({0})=0,"",SUM({0}))'.format(KEY["ciclo_lineas"]))
+rb.merge_cells(start_row=c1_ + 2, start_column=1, end_row=c1_ + 2, end_column=3)
+rb.cell(row=c1_ + 2, column=1, value="AGOTADOS POR CADA 100 LÍNEAS").font = f(10, True, NAVY_D)
+rb.cell(row=c1_ + 2, column=1).alignment = RGT
+rb.cell(row=c1_ + 2, column=4,
+        value='=IF(OR($D${0}="",$D${0}=0),"",$D${1}/$D${0}*100)'.format(c1_ + 1, c1_))
+for i in range(3):
+    cell = rb.cell(row=c1_ + i, column=4)
+    cell.border = BOX; cell.alignment = CTR; cell.fill = PatternFill("solid", fgColor=GREY_L)
+    cell.font = f(12, True, NAVY_D) if i == 2 else f(10, color="46525E")
+    cell.number_format = "0.00" if i == 2 else "0"
+    rb.row_dimensions[c1_ + i].height = 19
+KEY["agot100"] = "'5 Reabastecimiento'!$D${}".format(c1_ + 2)
+rb.conditional_formatting.add("D{0}:D{0}".format(c1_ + 2), CellIsRule(operator="greaterThan", formula=["3"],
+    fill=PatternFill("solid", fgColor=RED_BG), font=f(12, True, RED_T)))
+r = nota(rb, c1_ + 4, N,
+    "CÓMO SE LEE — El porcentaje en riesgo del barrido 3 dice si el reabastecimiento aguanta el pico. El deterioro dice si "
+    "va adelante o detrás. Y los agotados por cada 100 líneas son el indicador con denominador: es el único comparable "
+    "entre días y entre CEDI, porque no depende de cuánto volumen hubo. Referencia: menos de 1 por cada 100 líneas.", W)
+rb.freeze_panes = "A{}".format(ejA); rb.print_title_rows = "{0}:{0}".format(hdrA)
+
+# ================================================================= 6 SEGUIMIENTO PEDIDOS
+W = [14, 20, 12, 9, 12, 14, 13, 12, 13, 13, 13, 12, 13, 15, 11, 12, 13, 12, 26]; N = 19
+setup(sp, W, TAPE)
+r = titulo(sp, 1, N, "6 · SEGUIMIENTO DE PEDIDOS — DEL PEDIDO AL CAMIÓN",
+           "El corazón del día. Mide cuánto avanza el pedido y cuánto pasa quieto: en la mayoría de CEDI, entre 60 y 80% de su ciclo es espera.")
+r = bloque(sp, r, N, W,
+    "Reconstruir el ciclo completo de pedidos reales y separar el tiempo de trabajo del tiempo de espera, en especial el que pasa alistado esperando cargue.",
+    "Tú. Las horas se copian de la orden, del tablero o preguntando en cada estación.",
+    "10 minutos al escoger los pedidos y unos minutos cada vez que pases por una estación.",
+    "Esta hoja. Si el WMS entrega las marcas de tiempo, se pegan encima y las fórmulas siguen funcionando.",
+    ["Escoge 20 pedidos del día apenas llegues. De rutas distintas y de horas distintas — no los que te sugieran.",
+     "Anota la hora de liberación de cada uno: es cuando arranca el cronómetro del pedido.",
+     "Cada vez que pases por alistamiento, chequeo, staging o muelle, anota las horas que ya se cumplieron. No tienes que quedarte parado esperando.",
+     "Al cierre completa las horas de cargue y de salida del vehículo. Los pedidos incompletos igual sirven: las columnas que se puedan calcular se calculan.",
+     "Si consigues la descarga del WMS con las mismas marcas de tiempo, pégala desde la primera fila de datos: las columnas grises se recalculan solas. Para más de 60 pedidos, arrastra las fórmulas hacia abajo."],
+    ["Escribe todas las horas en formato HH:MM. Por ejemplo 14:05, no «2 y cinco».",
+     "LIBERACIÓN es cuando el pedido queda disponible para alistar, no cuando el cliente lo puso.",
+     "FIN DE ALISTAMIENTO es cuando el pedido queda completo, antes de chequeo.",
+     "INICIO DE CARGUE es cuando el primer bulto sube al vehículo, no cuando el vehículo llega.",
+     "Si una estación no existe en Madrid (por ejemplo, no hay chequeo aparte), deja esa hora vacía: el ciclo total y el porcentaje de espera se siguen calculando bien.",
+     "No inventes horas. Una celda vacía es mejor que un dato aproximado: la fila incompleta no distorsiona los promedios."],
+    ["Cuando un pedido queda alistado y no sale, ¿dónde se pone y cuál es la capacidad de ese espacio?",
+     "¿Por qué esperó el pedido que más esperó hoy? Pregúntalo señalando ese pedido concreto.",
+     "¿Se alista contra la hora de cita del vehículo o contra el corte general?",
+     "¿Quién avisa a despacho que un pedido ya está listo, y cómo?",
+     "¿Cuántos pedidos del día anterior quedaron alistados sin salir?"])
+hdr = r
+r = tabla(sp, r, ["Pedido", "Ruta o cliente", "Prioridad", "Líneas", "Hora liberación", "Inicio alistamiento",
+                  "Fin alistamiento", "Fin chequeo", "Inicio cargue", "Salida del vehículo",
+                  "Espera para arrancar (min)", "Alistamiento (min)", "Espera a chequeo (min)",
+                  "Alistado esperando cargue (min)", "Cargue (min)", "Ciclo total (min)",
+                  "% del ciclo en espera", "Min por línea", "Observación"], alturas=44)
+FORMS = [
+    (11, '=IF(OR($E{0}="",$F{0}=""),"",($F{0}-$E{0})*1440)'),
+    (12, '=IF(OR($F{0}="",$G{0}=""),"",($G{0}-$F{0})*1440)'),
+    (13, '=IF(OR($G{0}="",$H{0}=""),"",($H{0}-$G{0})*1440)'),
+    (14, '=IF(OR($H{0}="",$I{0}=""),"",($I{0}-$H{0})*1440)'),
+    (15, '=IF(OR($I{0}="",$J{0}=""),"",($J{0}-$I{0})*1440)'),
+    (16, '=IF(OR($E{0}="",$J{0}=""),"",($J{0}-$E{0})*1440)'),
+    (17, '=IF(OR($P{0}="",$L{0}="",$O{0}="",$P{0}=0),"",($P{0}-$L{0}-$O{0})/$P{0})'),
+    (18, '=IF(OR($L{0}="",$D{0}="",$D{0}=0),"",$L{0}/$D{0})'),
+]
+ej = r
+ejemplo(sp, ej, N, ["EJ ▸ PED-88213", "Ruta Norte 3", "Alta", 34, "08:00", "09:20", "10:35", "10:55",
+                    "14:10", "15:05", None, None, None, None, None, None, None, None,
+                    "Alistado a las 10:55 y cargó a las 14:10"])
+for col, fm in FORMS: sp.cell(row=ej, column=col, value=fm.format(ej))
+sp.cell(row=ej, column=17).number_format = "0.0%"; sp.cell(row=ej, column=18).number_format = "0.0"
+d1, d2 = ej + 1, ej + 60
+for rr in range(d1, d2 + 1):
+    for col, fm in FORMS: sp.cell(row=rr, column=col, value=fm.format(rr))
+cuerpo(sp, d1, d2, N, entrada=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 19), calc=tuple(range(11, 19)), h=17)
+for rr in range(d1, d2 + 1):
+    for c_ in range(3, 19):
+        sp.cell(row=rr, column=c_).alignment = CTR
+        if 5 <= c_ <= 10: sp.cell(row=rr, column=c_).number_format = "hh:mm"
+        elif 11 <= c_ <= 16: sp.cell(row=rr, column=c_).number_format = "0"
+    sp.cell(row=rr, column=17).number_format = "0.0%"; sp.cell(row=rr, column=18).number_format = "0.0"
+tr = d2 + 1
+total_row(sp, tr, N, "TOTAL / PROMEDIO")
+sp.cell(row=tr, column=4, value='=IF(SUM(D{0}:D{1})=0,"",SUM(D{0}:D{1}))'.format(d1, d2))
+for c_ in range(11, 17):
+    L = get_column_letter(c_)
+    sp.cell(row=tr, column=c_, value='=IF(COUNT({0}{1}:{0}{2})=0,"",AVERAGE({0}{1}:{0}{2}))'.format(L, d1, d2))
+    sp.cell(row=tr, column=c_).number_format = "0"
+sp.cell(row=tr, column=17,
+        value='=IF(SUM($P${0}:$P${1})=0,"",(SUM($P${0}:$P${1})-SUM($L${0}:$L${1})-SUM($O${0}:$O${1}))/SUM($P${0}:$P${1}))'.format(d1, d2))
+sp.cell(row=tr, column=17).number_format = "0.0%"
+sp.cell(row=tr, column=18,
+        value='=IF(OR(SUM($L${0}:$L${1})=0,SUM($D${0}:$D${1})=0),"",SUM($L${0}:$L${1})/SUM($D${0}:$D${1}))'.format(d1, d2))
+sp.cell(row=tr, column=18).number_format = "0.0"
+KEY["espera_cargue"] = "'6 Seguimiento pedidos'!$N${}".format(tr)
+KEY["pct_espera"] = "'6 Seguimiento pedidos'!$Q${}".format(tr)
+sp.conditional_formatting.add("N{0}:N{0}".format(tr), CellIsRule(operator="greaterThan", formula=["180"],
+    fill=PatternFill("solid", fgColor=RED_BG), font=f(10.5, True, RED_T)))
+sp.conditional_formatting.add("Q{0}:Q{0}".format(tr), CellIsRule(operator="greaterThan", formula=["0.6"],
+    fill=PatternFill("solid", fgColor=RED_BG), font=f(10.5, True, RED_T)))
+sp.conditional_formatting.add("N{}:N{}".format(d1, d2), CellIsRule(operator="greaterThan", formula=["180"],
+    fill=PatternFill("solid", fgColor=RED_BG), font=f(10, color=RED_T)))
+lista(sp, "C{}:C{}".format(d1, d2), ["Alta", "Media", "Baja", "Urgente"], "Prioridad declarada",
+      "La prioridad que el sistema o el supervisor le asignó. Se compara con el orden real en la hoja 7.")
+ayuda(sp, "A{}:A{}".format(d1, d2), "Pedido", "Número del pedido. Escoge de rutas y horas distintas, no los que te sugieran.")
+ayuda(sp, "D{}:D{}".format(d1, d2), "Líneas", "Cuántas referencias distintas tiene el pedido. Sirve para comparar pedidos de tamaños distintos.", "num")
+for col, t_, m_ in (
+    ("E", "Hora de liberación", "Cuando el pedido queda disponible para alistar, no cuando el cliente lo puso. Formato HH:MM."),
+    ("F", "Inicio de alistamiento", "Cuando el operario toma la orden y arranca. Formato HH:MM."),
+    ("G", "Fin de alistamiento", "Cuando el pedido queda completo, antes de chequeo. Formato HH:MM."),
+    ("H", "Fin de chequeo", "Cuando queda verificado y rotulado. Si no hay chequeo aparte, déjala vacía."),
+    ("I", "Inicio de cargue", "Cuando el primer bulto sube al vehículo, no cuando el vehículo llega."),
+    ("J", "Salida del vehículo", "Cuando el vehículo sale de las instalaciones. Formato HH:MM.")):
+    ayuda(sp, "{0}{1}:{0}{2}".format(col, d1, d2), t_, m_)
+ayuda(sp, "S{}:S{}".format(d1, d2), "Observación", "Por qué esperó, si hubo reproceso, si faltó producto, si el vehículo llegó tarde.")
+r = nota(sp, tr + 2, N,
+    "CÓMO SE LEE — «Alistado esperando cargue» es el tiempo en que el pedido ya está terminado y no sale: ocupa staging, "
+    "no agrega nada y es invisible en cualquier indicador de productividad. El «% del ciclo en espera» es todo lo que no "
+    "fue alistamiento ni cargue. Si pasa de 60%, el problema no es la velocidad de la gente: es la sincronización entre "
+    "alistamiento, transporte y programación de salidas. Ese es el número que cambia la conversación.", W)
+sp.freeze_panes = "B{}".format(ej); sp.print_title_rows = "{0}:{0}".format(hdr)
+# ================================================================= 7 PRIORIDADES
+W = [20, 22, 24, 24, 15, 15, 34]; N = 7
+setup(pr, W, TAPE)
+r = titulo(pr, 1, N, "7 · PRIORIDADES Y SECUENCIA DE ALISTAMIENTO",
+           "Si el CEDI alista en el orden en que los pedidos tienen que salir. Alistar fuera de secuencia llena el staging y hace esperar a los camiones.")
+r = bloque(pr, r, N, W,
+    "Comprobar si existe una regla de priorización y si la operación la cumple, comparando el orden real de alistamiento contra el orden en que los pedidos debían salir.",
+    "Tú, al cierre del día, con los pedidos que ya seguiste en la hoja 6.",
+    "20 minutos.",
+    "La hoja 6 diligenciada y la programación de salidas del día.",
+    ["Apenas llegues, pregunta cómo se programan las salidas y márcalo en el desplegable de abajo: citas por ruta, corte único o mixto. De eso depende contra qué se compara.",
+     "Haz las cinco preguntas del bloque A y escribe la respuesta textual, no tu interpretación.",
+     "Al cierre, pasa al bloque B los pedidos de la hoja 6 con su hora de cita o de corte aplicable.",
+     "Ordena mentalmente los pedidos por esa hora: el que sale primero es el 1. Escribe ese número en «orden que le correspondía».",
+     "Escribe en «orden real» el número según el orden en que efectivamente se alistaron (usa la hora de fin de alistamiento de la hoja 6).",
+     "La desviación y el porcentaje fuera de secuencia se calculan solos."],
+    ["Si el esquema es de CITAS, la hora de referencia es la hora de cita del vehículo.",
+     "Si es CORTE ÚNICO, la referencia es la prioridad de cliente o de ruta que ellos declaren. Escríbela en la observación.",
+     "Si es MIXTO, usa la cita cuando exista y el corte para el resto.",
+     "Los dos órdenes se numeran 1, 2, 3… sobre el mismo conjunto de pedidos. Si no puedes ordenar un pedido, déjalo vacío en las dos columnas.",
+     "Se considera fuera de secuencia una desviación mayor a 2 posiciones. Uno o dos puestos es ruido normal de operación."],
+    ["¿Existe una regla escrita de priorización o cada turno decide?",
+     "¿Quién puede saltarse la regla y qué tiene que pasar para que se salte?",
+     "¿Qué cuenta como pedido urgente y cuántos hubo ayer?",
+     "¿Qué pasa con los pedidos que no alcanzan a salir? ¿Quedan de primeros mañana o vuelven a la cola?",
+     "¿Alistamiento sabe a qué hora tiene cita cada vehículo?"])
+r = banda(pr, r, N, "BLOQUE A — LA REGLA DE PRIORIZACIÓN", NAVY)
+esq = r
+pr.merge_cells(start_row=esq, start_column=1, end_row=esq, end_column=2)
+pr.cell(row=esq, column=1, value="Esquema de programación de salidas").font = f(10, True, NAVY_D)
+pr.cell(row=esq, column=1).alignment = RGT
+pr.merge_cells(start_row=esq, start_column=3, end_row=esq, end_column=4)
+cell = pr.cell(row=esq, column=3, value="Por definir")
+cell.fill = PatternFill("solid", fgColor=YELLOW); cell.font = f(11, True, "00329B")
+cell.alignment = CTR; cell.border = BOX
+pr.merge_cells(start_row=esq, start_column=5, end_row=esq, end_column=7)
+pr.cell(row=esq, column=5, value="Pregúntalo en la reunión de apertura. Define contra qué se mide la secuencia.").font = f(9, color="6E7A86")
+pr.cell(row=esq, column=5).alignment = WRAPC
+pr.row_dimensions[esq].height = 24
+lista(pr, "C{0}:C{0}".format(esq), ["Citas por ruta", "Corte único", "Mixto", "Por definir"],
+      "Esquema de programación", "Citas = cada vehículo tiene hora asignada. Corte único = todo sale tras un corte común. Mixto = algunas rutas con cita.")
+hq = esq + 2
+for cols, lab in (((1, 2), "Pregunta"), ((3, 4), "Respuesta"), ((5, 7), "Señal de alarma en la respuesta")):
+    pr.merge_cells(start_row=hq, start_column=cols[0], end_row=hq, end_column=cols[1])
+    cc = pr.cell(row=hq, column=cols[0], value=lab)
+    cc.font = f(9, True, WHITE); cc.fill = PatternFill("solid", fgColor=NAVY); cc.alignment = CTRW
+    for c_ in range(cols[0], cols[1] + 1): pr.cell(row=hq, column=c_).border = BOX
+pr.row_dimensions[hq].height = 22
+qs = [
+    ("¿Existe una regla escrita de priorización de pedidos?", "No hay, o cada supervisor tiene la suya."),
+    ("¿Quién la define y quién puede saltársela?", "Cualquiera puede saltarla, o la salta comercial por teléfono."),
+    ("¿Qué cuenta como pedido urgente y cuántos hubo ayer?", "Más del 10% del día son urgentes: la urgencia dejó de serlo."),
+    ("¿Alistamiento conoce la hora de cita de cada vehículo?", "No la conocen: alistan a ciegas contra el corte."),
+    ("¿Qué pasa con los pedidos que no alcanzan a salir?", "Vuelven a la cola general en vez de quedar de primeros."),
+]
+qr = hq + 1
+for q, alarma in qs:
+    pr.merge_cells(start_row=qr, start_column=1, end_row=qr, end_column=2)
+    a = pr.cell(row=qr, column=1, value=q); a.font = f(10); a.alignment = WRAP
+    pr.merge_cells(start_row=qr, start_column=3, end_row=qr, end_column=4)
+    b = pr.cell(row=qr, column=3); b.fill = PatternFill("solid", fgColor=YELLOW); b.font = f(10, color="00329B")
+    b.alignment = WRAP
+    pr.merge_cells(start_row=qr, start_column=5, end_row=qr, end_column=7)
+    c_ = pr.cell(row=qr, column=5, value=alarma); c_.font = f(9, color=AMB_T); c_.alignment = WRAP
+    for cc_ in range(1, N + 1): pr.cell(row=qr, column=cc_).border = BOX
+    pr.row_dimensions[qr].height = 30
+    qr += 1
+ayuda(pr, "C{}:C{}".format(hq + 1, qr - 1), "Respuesta", "Escribe la respuesta textual, no tu interpretación. Las palabras exactas valen más después.")
+
+r = banda(pr, qr + 1, N, "BLOQUE B — ORDEN CORRECTO FRENTE A ORDEN REAL", NAVY)
+hdrB = r
+r = tabla(pr, r, ["Pedido", "Hora de cita o corte aplicable", "Orden que le correspondía",
+                  "Orden real de alistamiento", "Desviación", "¿Salió a tiempo?", "Observación"])
+ej = r
+ejemplo(pr, ej, N, ["EJ ▸ PED-88213", "14:30", 3, 9, None, "No", "Se alistó de últimas teniendo cita temprana"])
+pr.cell(row=ej, column=5, value='=IF(OR($C{0}="",$D{0}=""),"",ABS($D{0}-$C{0}))'.format(ej))
+d1, d2 = ej + 1, ej + 20
+for rr in range(d1, d2 + 1):
+    pr.cell(row=rr, column=5, value='=IF(OR($C{0}="",$D{0}=""),"",ABS($D{0}-$C{0}))'.format(rr))
+cuerpo(pr, d1, d2, N, entrada=(1, 2, 3, 4, 6, 7), calc=(5,), h=18)
+for rr in range(d1, d2 + 1):
+    for c_ in (2, 3, 4, 5, 6): pr.cell(row=rr, column=c_).alignment = CTR
+lista(pr, "F{}:F{}".format(d1, d2), ["Sí", "No"], "¿Salió a tiempo?",
+      "Sí = el pedido salió dentro de su cita o antes del corte que le aplicaba.")
+ayuda(pr, "A{}:A{}".format(d1, d2), "Pedido", "El mismo número que usaste en la hoja 6.")
+ayuda(pr, "B{}:B{}".format(d1, d2), "Hora de cita o corte", "La hora contra la cual debía salir. Formato HH:MM.")
+ayuda(pr, "C{}:C{}".format(d1, d2), "Orden que le correspondía", "Ordena los pedidos por su hora de cita o corte: el primero en salir es el 1.", "num")
+ayuda(pr, "D{}:D{}".format(d1, d2), "Orden real", "Ordena por la hora de fin de alistamiento de la hoja 6: el primero alistado es el 1.", "num")
+pr.conditional_formatting.add("E{}:E{}".format(d1, d2), CellIsRule(operator="greaterThan", formula=["2"],
+    fill=PatternFill("solid", fgColor=RED_BG), font=f(10, True, RED_T)))
+tr = d2 + 1
+total_row(pr, tr, N, "PEDIDOS EVALUADOS")
+pr.cell(row=tr, column=3, value='=IF(COUNT($E${0}:$E${1})=0,"",COUNT($E${0}:$E${1}))'.format(d1, d2))
+pr.cell(row=tr, column=4, value="Fuera de secuencia")
+pr.cell(row=tr, column=4).font = f(9, True, "46525E"); pr.cell(row=tr, column=4).alignment = RGT
+pr.cell(row=tr, column=5,
+        value='=IF(COUNT($E${0}:$E${1})=0,"",COUNTIF($E${0}:$E${1},">2")/COUNT($E${0}:$E${1}))'.format(d1, d2))
+pr.cell(row=tr, column=5).number_format = "0.0%"
+pr.cell(row=tr, column=6,
+        value='=IF((COUNTIF($F${0}:$F${1},"Sí")+COUNTIF($F${0}:$F${1},"No"))=0,"",COUNTIF($F${0}:$F${1},"Sí")/(COUNTIF($F${0}:$F${1},"Sí")+COUNTIF($F${0}:$F${1},"No")))'.format(d1, d2))
+pr.cell(row=tr, column=6).number_format = "0.0%"
+KEY["secuencia"] = "'7 Prioridades'!$E${}".format(tr)
+pr.conditional_formatting.add("E{0}:E{0}".format(tr), CellIsRule(operator="greaterThan", formula=["0.25"],
+    fill=PatternFill("solid", fgColor=RED_BG), font=f(10.5, True, RED_T)))
+r = nota(pr, tr + 2, N,
+    "CÓMO SE LEE — La columna F del total es el porcentaje que salió a tiempo. Cuando se alista fuera de secuencia pasan "
+    "dos cosas al mismo tiempo: el staging se llena de pedidos que todavía no salen, y los camiones de los pedidos que sí "
+    "salen esperan. Es una de las causas más frecuentes de staging saturado, y casi nunca se mide.", W)
+pr.freeze_panes = "A{}".format(ej); pr.print_title_rows = "{0}:{0}".format(hdrB)
+
+# ================================================================= 8 MUELLE Y CARGUE
+W = [13, 20, 13, 17, 12, 12, 12, 17, 15, 13, 17, 16, 26]; N = 13
+setup(mc, W, TAPE)
+r = titulo(mc, 1, N, "8 · MUELLE Y CARGUE",
+           "Dónde se pierde el tiempo del vehículo, qué tan rápido se carga y cuántas veces el camión llega antes que el pedido.")
+r = bloque(mc, r, N, W,
+    "Medir la permanencia del vehículo, separar espera de cargue, calcular la productividad del cargue y detectar cuántos vehículos llegaron sin que el pedido estuviera listo.",
+    "Portería registra las horas durante el día; tú observas el cargue en el pico y recoges la planilla al cierre.",
+    "2 minutos por vehículo para portería. 30 minutos para ti en el pico.",
+    "Una planilla en portería y esta hoja.",
+    ["Pide en portería que registren cada vehículo con tres horas: llegada, entrada al muelle y salida. Si ya lo llevan, pide además los últimos 30 días.",
+     "Anota arriba cuántos muelles hay habilitados y cuántos se usan al mismo tiempo. La diferencia suele explicar la espera.",
+     "En el pico, párate en el muelle y para cada vehículo anota: cuántos pallets o cajas se cargaron, cuántas personas cargaron, y si el pedido estaba listo cuando el vehículo llegó.",
+     "Al cierre recoge la planilla de portería y completa las horas que te falten.",
+     "La espera, el cargue, la permanencia y la productividad se calculan solos."],
     ["Escribe las horas en formato HH:MM. Por ejemplo 08:15, no «8 y cuarto» ni «8:15 am».",
      "ESPERA es desde que llega a portería hasta que entra al muelle. Es tiempo perdido puro.",
      "CARGUE es desde que entra al muelle hasta que sale. Incluye documentos y precintado.",
-     "Si un vehículo entró y salió sin cargar, regístralo igual y anótalo en Observación.",
-     "Si no tienes la hora exacta de entrada al muelle, deja la celda vacía: es mejor un dato faltante que uno inventado."],
+     "«¿Pedido listo al llegar?» es NO si al llegar el vehículo el pedido todavía se estaba alistando o chequeando.",
+     "En unidades cargadas usa siempre la misma unidad — pallets o cajas, no mezcles — o la productividad no será comparable.",
+     "Si no tienes la hora de entrada al muelle, deja la celda vacía: es mejor un dato faltante que uno inventado."],
     ["¿Existe sistema de citas para los vehículos y quién lo administra?",
-     "¿Cuántos muelles hay habilitados y cuántos se usan al mismo tiempo?",
+     "¿Cuántos muelles hay habilitados y por qué no se usan todos al mismo tiempo?",
      "¿El pedido ya está alistado cuando llega el vehículo, o se alista con el vehículo esperando?",
+     "¿Hay secuencia de cargue por ruta de entrega? Lo último en cargar debe ser lo primero en entregar.",
+     "¿Los que cargan son los mismos que alistan?",
      "¿Cuánto le cobra el transportador a la compañía por hora de espera?"])
-hdr = r
-tabla(vh, hdr, ["Placa", "Transportista", "Hora llegada", "Hora entrada muelle", "Hora salida",
-                "Espera (min)", "Cargue (min)", "Permanencia total (min)", "Observación"])
-ej = hdr + 1
-ejemplo(vh, ej, N, ["EJ ▸ ABC123", "Transportes Norte", "07:40", "09:05", "10:20", None, None, None,
-                    "Esperó porque el pedido no estaba alistado"])
-for col, fm in ((6, '=IF(OR($C{0}="",$D{0}=""),"",($D{0}-$C{0})*1440)'),
-                (7, '=IF(OR($D{0}="",$E{0}=""),"",($E{0}-$D{0})*1440)'),
-                (8, '=IF(OR($C{0}="",$E{0}=""),"",($E{0}-$C{0})*1440)')):
-    vh.cell(row=ej, column=col, value=fm.format(ej))
+mu_r = r
+mc.merge_cells(start_row=mu_r, start_column=1, end_row=mu_r, end_column=2)
+mc.cell(row=mu_r, column=1, value="Muelles habilitados").font = f(10, True)
+mc.cell(row=mu_r, column=1).alignment = RGT
+cell = mc.cell(row=mu_r, column=3); cell.fill = PatternFill("solid", fgColor=YELLOW)
+cell.font = f(11, True, "00329B"); cell.alignment = CTR; cell.border = BOX
+mc.merge_cells(start_row=mu_r, start_column=4, end_row=mu_r, end_column=5)
+mc.cell(row=mu_r, column=4, value="Muelles en uso al mismo tiempo").font = f(10, True)
+mc.cell(row=mu_r, column=4).alignment = RGT
+cell = mc.cell(row=mu_r, column=6); cell.fill = PatternFill("solid", fgColor=YELLOW)
+cell.font = f(11, True, "00329B"); cell.alignment = CTR; cell.border = BOX
+ayuda(mc, "C{0}:C{0}".format(mu_r), "Muelles habilitados", "Cuántas puertas de despacho existen y están operativas.", "num")
+ayuda(mc, "F{0}:F{0}".format(mu_r), "Muelles en uso", "Cuántas se usaron simultáneamente en el pico. La diferencia con las habilitadas suele explicar la espera.", "num")
+mc.row_dimensions[mu_r].height = 22
+hdr = mu_r + 2
+r = tabla(mc, hdr, ["Placa", "Transportista", "Hora llegada", "Hora entrada muelle", "Hora salida",
+                    "Espera (min)", "Cargue (min)", "Permanencia total (min)", "Unidades cargadas",
+                    "Personas en el cargue", "Unidades por hora-hombre", "¿Pedido listo al llegar?", "Observación"],
+           alturas=40)
+ej = r
+ejemplo(mc, ej, N, ["EJ ▸ ABC123", "Transportes Norte", "07:40", "09:05", "10:20", None, None, None, 24, 2, None,
+                    "No", "Esperó porque el pedido no estaba alistado"])
+MF = [(6, '=IF(OR($C{0}="",$D{0}=""),"",($D{0}-$C{0})*1440)'),
+      (7, '=IF(OR($D{0}="",$E{0}=""),"",($E{0}-$D{0})*1440)'),
+      (8, '=IF(OR($C{0}="",$E{0}=""),"",($E{0}-$C{0})*1440)'),
+      (11, '=IF(OR($G{0}="",$G{0}=0,$I{0}="",$J{0}="",$J{0}=0),"",$I{0}/(($G{0}/60)*$J{0}))')]
+for col, fm in MF: mc.cell(row=ej, column=col, value=fm.format(ej))
+mc.cell(row=ej, column=11).number_format = "0.0"
 d1, d2 = ej + 1, ej + 20
 for rr in range(d1, d2 + 1):
-    vh.cell(row=rr, column=6, value='=IF(OR($C{0}="",$D{0}=""),"",($D{0}-$C{0})*1440)'.format(rr))
-    vh.cell(row=rr, column=7, value='=IF(OR($D{0}="",$E{0}=""),"",($E{0}-$D{0})*1440)'.format(rr))
-    vh.cell(row=rr, column=8, value='=IF(OR($C{0}="",$E{0}=""),"",($E{0}-$C{0})*1440)'.format(rr))
-cuerpo(vh, d1, d2, N, entrada=(1, 2, 3, 4, 5, 9), calc=(6, 7, 8), h=17)
+    for col, fm in MF: mc.cell(row=rr, column=col, value=fm.format(rr))
+cuerpo(mc, d1, d2, N, entrada=(1, 2, 3, 4, 5, 9, 10, 12, 13), calc=(6, 7, 8, 11), h=17)
 for rr in range(d1, d2 + 1):
-    for c_ in range(3, 9):
-        vh.cell(row=rr, column=c_).alignment = CTR
-        vh.cell(row=rr, column=c_).number_format = "hh:mm" if c_ < 6 else "0"
+    for c_ in range(3, 13):
+        mc.cell(row=rr, column=c_).alignment = CTR
+        if c_ < 6: mc.cell(row=rr, column=c_).number_format = "hh:mm"
+        elif c_ <= 8: mc.cell(row=rr, column=c_).number_format = "0"
+    mc.cell(row=rr, column=11).number_format = "0.0"
 tr = d2 + 1
-total_row(vh, tr, N, "PROMEDIO")
-for c_ in (6, 7, 8):
+total_row(mc, tr, N, "PROMEDIO")
+for c_ in (6, 7, 8, 11):
     L = get_column_letter(c_)
-    vh.cell(row=tr, column=c_, value='=IF(COUNT({0}{1}:{0}{2})=0,"",AVERAGE({0}{1}:{0}{2}))'.format(L, d1, d2))
-    vh.cell(row=tr, column=c_).number_format = "0"
-KEY["muelle"] = "'6 Vehículos'!$H${}".format(tr)
-vh.conditional_formatting.add("H{0}:H{0}".format(tr), CellIsRule(operator="greaterThan", formula=["90"],
+    mc.cell(row=tr, column=c_, value='=IF(COUNT({0}{1}:{0}{2})=0,"",AVERAGE({0}{1}:{0}{2}))'.format(L, d1, d2))
+    mc.cell(row=tr, column=c_).number_format = "0.0" if c_ == 11 else "0"
+mc.cell(row=tr, column=9, value='=IF(SUM(I{0}:I{1})=0,"",SUM(I{0}:I{1}))'.format(d1, d2))
+KEY["muelle"] = "'8 Muelle y cargue'!$H${}".format(tr)
+mc.conditional_formatting.add("H{0}:H{0}".format(tr), CellIsRule(operator="greaterThan", formula=["90"],
     fill=PatternFill("solid", fgColor=RED_BG), font=f(10.5, True, RED_T)))
-ayuda(vh, "A{}:A{}".format(d1, d2), "Placa", "Placa del vehículo tal como quedó en la planilla de portería.")
+sl = tr + 1
+mc.merge_cells(start_row=sl, start_column=1, end_row=sl, end_column=11)
+mc.cell(row=sl, column=1, value="VEHÍCULOS QUE LLEGARON SIN EL PEDIDO LISTO").font = f(10, True, NAVY_D)
+mc.cell(row=sl, column=1).alignment = RGT
+cell = mc.cell(row=sl, column=12,
+    value='=IF((COUNTIF($L${0}:$L${1},"Sí")+COUNTIF($L${0}:$L${1},"No"))=0,"",COUNTIF($L${0}:$L${1},"No")/(COUNTIF($L${0}:$L${1},"Sí")+COUNTIF($L${0}:$L${1},"No")))'.format(d1, d2))
+cell.number_format = "0.0%"; cell.font = f(12, True, NAVY_D); cell.alignment = CTR
+cell.fill = PatternFill("solid", fgColor=GREY_L); cell.border = BOX
+mc.row_dimensions[sl].height = 22
+KEY["sinlisto"] = "'8 Muelle y cargue'!$L${}".format(sl)
+mc.conditional_formatting.add("L{0}:L{0}".format(sl), CellIsRule(operator="greaterThan", formula=["0.2"],
+    fill=PatternFill("solid", fgColor=RED_BG), font=f(12, True, RED_T)))
+lista(mc, "L{}:L{}".format(d1, d2), ["Sí", "No"], "¿Pedido listo al llegar?",
+      "No = al llegar el vehículo, el pedido todavía se estaba alistando o chequeando. Conecta con la hoja 6.")
+ayuda(mc, "A{}:A{}".format(d1, d2), "Placa", "Placa del vehículo tal como quedó en la planilla de portería.")
 for col, t_, m_ in (("C", "Hora de llegada", "Cuando el vehículo llega a portería. Formato HH:MM (ej. 07:40)."),
                     ("D", "Hora entrada a muelle", "Cuando el vehículo se ubica en el muelle. Si no la tienes, déjala vacía."),
                     ("E", "Hora de salida", "Cuando el vehículo sale de las instalaciones. Formato HH:MM.")):
-    ayuda(vh, "{0}{1}:{0}{2}".format(col, d1, d2), t_, m_)
-ayuda(vh, "I{}:I{}".format(d1, d2), "Observación", "Por qué esperó, si hubo reproceso, si salió sin cargar.")
-r = nota(vh, tr + 2, N,
-    "CÓMO SE LEE — Si la espera pesa más que el cargue, el cuello está en programación de citas y no en la operación de "
-    "muelle. Permanencias por encima de tres horas suelen significar staging saturado con pedidos ya alistados esperando "
-    "vehículo, o pedidos que se alistan con el vehículo parado en la puerta.", W)
-vh.freeze_panes = "A{}".format(ej); vh.print_title_rows = "{0}:{0}".format(hdr)
-
-# ================================================================= 7 PALLETS EN PISO
-W = [28, 20, 34, 17, 19, 34]; N = 6
-setup(pp, W, TAPE)
-r = titulo(pp, 1, N, "7 · PALLETS EN PISO — PRUEBA DE LA ETIQUETA DE FECHA",
-           "El dato más contundente del día, y cuesta una caja de etiquetas.")
-r = bloque(pp, r, N, W,
-    "Cuantificar el producto que está fuera de posición y, a las 48 horas, saber cuánto de eso es backlog real y no tránsito.",
-    "Tú, con cinta de enmascarar y marcador grueso.",
-    "40 minutos hoy. 15 minutos a las 48 horas.",
-    "Cinta de enmascarar, marcador y la cámara del celular.",
-    ["Recorre todas las zonas donde pueda haber producto fuera de posición: recepción, staging, pasillos de maniobra, devoluciones, averías, cuarentena.",
-     "Pega una etiqueta con FECHA Y HORA en cada pallet que esté fuera de posición. No te saltes ninguno.",
-     "Cuenta los pallets por zona y regístralos aquí, una fila por zona.",
-     "Toma una foto del conjunto de cada zona, con la hora visible.",
-     "VUELVE A LAS 48 HORAS (o pide una foto de las mismas zonas) y marca en la columna correspondiente cuáles siguen ahí con la etiqueta original."],
-    ["«Fuera de posición» es todo producto que no está en una ubicación del sistema.",
-     "Incluye lo que esté en pasillos de maniobra aunque te digan «es que ya se va». Precisamente eso es lo que estás midiendo.",
-     "Si hay producto apilado sin pallet, cuéntalo como pallets equivalentes y anótalo en Observación.",
-     "No cuentes el producto que está en un muelle con vehículo cargando: eso sí es tránsito real."],
-    ["¿Cuál es el dock-to-stock objetivo y cuál fue el real de la semana pasada?",
-     "¿Quién autoriza la disposición final de devoluciones y averías, y cuándo lo hizo por última vez?",
-     "¿Existe una regla de piso libre al cierre del turno? ¿Quién la verifica?",
-     "¿Qué recepción del último mes se demoró más en quedar disponible y por qué?"])
-hdr = r
-tabla(pp, hdr, ["Zona", "N.º de pallets etiquetados", "Producto / descripción", "Fecha de la etiqueta",
-                "¿Sigue ahí a las 48 h?", "Observación"])
-ej = hdr + 1
-ejemplo(pp, ej, N, ["EJ ▸ Recepción", 18, "Importado sin ubicar, 3 referencias", "24/08/2026", "Sí",
-                    "Llegó el contenedor el viernes"])
-d1, d2 = ej + 1, ej + 10
-zonas = ["Recepción", "Staging de despacho", "Pasillos de maniobra", "Devoluciones", "Averías",
-         "Cuarentena / pendiente de calidad", "Cross-dock", "Otro", None, None]
-for i, z in enumerate(zonas):
-    pp.cell(row=d1 + i, column=1, value=z)
-cuerpo(pp, d1, d2, N, entrada=(1, 2, 3, 4, 5, 6), h=21)
-for rr in range(d1, d2 + 1):
-    for c_ in (2, 4, 5):
-        pp.cell(row=rr, column=c_).alignment = CTR
-tr = d2 + 1
-total_row(pp, tr, N, "TOTAL PALLETS FUERA DE POSICIÓN")
-pp.cell(row=tr, column=2, value='=IF(COUNT(B{}:B{})=0,"",SUM(B{}:B{}))'.format(d1, d2, d1, d2))
-KEY["pallets"] = "'7 Pallets en piso'!$B${}".format(tr)
-lista(pp, "E{}:E{}".format(d1, d2), ["Sí", "No", "Parcial"], "¿Sigue ahí a las 48 h?",
-      "Se llena en la segunda visita. Sí = el mismo producto con la etiqueta original. Parcial = quedó una parte.")
-ayuda(pp, "B{}:B{}".format(d1, d2), "N.º de pallets", "Cuántos pallets etiquetaste en esa zona. Si es producto apilado sin pallet, calcula el equivalente.", "num")
-ayuda(pp, "C{}:C{}".format(d1, d2), "Producto", "Qué es y de dónde viene. Ayuda a rastrear la causa después.")
-ayuda(pp, "D{}:D{}".format(d1, d2), "Fecha de la etiqueta", "La fecha que escribiste en la cinta. Formato DD/MM/AAAA.")
-r = nota(pp, tr + 2, N,
-    "CÓMO SE LEE — Lo que siga ahí a las 48 horas con la etiqueta original es backlog real, contable y fotografiable: ya "
-    "no es «producto en tránsito». Es la evidencia que convierte una discusión de percepciones en una cifra que nadie "
-    "puede discutir en la reunión de gerencia.", W)
-pp.freeze_panes = "A{}".format(ej); pp.print_title_rows = "{0}:{0}".format(hdr)
-
-# ================================================================= 8 AGOTADOS
-W = [11, 20, 18, 22, 20, 13, 30]; N = 7
-setup(ag, W, TAPE)
-r = titulo(ag, 1, N, "8 · AGOTADOS INTERNOS DE PICKING",
-           "La causa oculta número uno de baja productividad, y casi ningún CEDI la mide.")
-r = bloque(ag, r, N, W,
-    "Contar cuántas veces un operario llega a una posición de picking y no hay producto, teniendo pedido pendiente.",
-    "Un supervisor de picking durante todo el turno. Tú solo entregas la planilla y la recoges.",
-    "Todo el turno, pero son 30 segundos por evento.",
-    "Esta hoja impresa o una planilla en papel para el supervisor.",
-    ["Al inicio del turno entrégale la planilla al supervisor de picking.",
-     "Explícale exactamente qué cuenta: cada vez que un operario llegue a una posición y no haya producto con pedido pendiente.",
-     "Pídele que anote hora, SKU, ubicación y cuántos minutos pasaron hasta que llegó el reabastecimiento.",
-     "Aclárale que esto no busca culpables: mide si el reabastecimiento va adelante o detrás del picking.",
-     "Recoge la planilla al cierre del turno y pásala a esta hoja."],
-    ["Cuenta el evento aunque el reabastecimiento llegue a los dos minutos. Lo que mides es la frecuencia, no la gravedad.",
-     "Si el operario se salta la línea y sigue con otra, sigue contando como agotado.",
-     "Si el producto está en la ubicación pero mal rotulado y el operario no lo reconoce, cuenta como agotado y anótalo.",
-     "Si no sabes los minutos exactos, deja la celda vacía. El conteo de eventos es lo que importa."],
-    ["¿Cada cuánto se reabastece la zona de picking y quién decide cuándo?",
-     "¿El reabastecimiento se hace en ola antes del turno o durante el turno según se va agotando?",
-     "¿Existe un punto de reorden por posición de picking o se hace a criterio?",
-     "¿Cuántas personas hay dedicadas a reabastecer frente a cuántas alistando?"])
-hdr = r
-tabla(ag, hdr, ["Hora", "SKU", "Ubicación", "Minutos sin reabastecer", "Pedido afectado", "Turno", "Observación"])
-ej = hdr + 1
-ejemplo(ag, ej, N, ["10:35", "SKU 100482", "A-04-01-A", 22, "PED-88213", "Mañana", "El operario siguió con otra línea"])
-d1, d2 = ej + 1, ej + 40
-cuerpo(ag, d1, d2, N, entrada=(1, 2, 3, 4, 5, 6, 7), h=16)
-for rr in range(d1, d2 + 1):
-    for c_ in (1, 4, 6):
-        ag.cell(row=rr, column=c_).alignment = CTR
-tr = d2 + 1
-total_row(ag, tr, N, "EVENTOS")
-ag.cell(row=tr, column=2, value='=IF(COUNTA(B{}:B{})=0,"",COUNTA(B{}:B{}))'.format(d1, d2, d1, d2))
-ag.cell(row=tr, column=3, value="MINUTOS PERDIDOS")
-ag.cell(row=tr, column=4, value='=IF(SUM(D{}:D{})=0,"",SUM(D{}:D{}))'.format(d1, d2, d1, d2))
-KEY["agotados"] = "'8 Agotados'!$B${}".format(tr)
-lista(ag, "F{}:F{}".format(d1, d2), ["Mañana", "Tarde", "Noche"], "Turno", "Turno en que ocurrió el agotado.")
-ayuda(ag, "A{}:A{}".format(d1, d2), "Hora", "Hora del evento, formato HH:MM. Los picos por hora dicen mucho.")
-ayuda(ag, "B{}:B{}".format(d1, d2), "SKU", "Referencia agotada. Si un mismo SKU se repite, ese es un punto de reorden mal puesto.")
-ayuda(ag, "D{}:D{}".format(d1, d2), "Minutos sin reabastecer", "Desde que se detectó hasta que llegó el producto. Si no lo sabes, déjalo vacío.", "num")
-r = nota(ag, tr + 2, N,
-    "CÓMO SE LEE — Un agotado interno detiene al operario, lo obliga a reordenar su recorrido y muchas veces termina en un "
-    "faltante al cliente. Si se repiten los mismos SKU, el punto de reorden está mal puesto. Si se concentran en una franja "
-    "horaria, el reabastecimiento va detrás del picking y debe pasar a ola antes del turno.", W)
-ag.freeze_panes = "A{}".format(ej); ag.print_title_rows = "{0}:{0}".format(hdr)
-
+    ayuda(mc, "{0}{1}:{0}{2}".format(col, d1, d2), t_, m_)
+ayuda(mc, "I{}:I{}".format(d1, d2), "Unidades cargadas", "Pallets o cajas. Usa siempre la misma unidad en toda la hoja o la productividad no será comparable.", "num")
+ayuda(mc, "J{}:J{}".format(d1, d2), "Personas en el cargue", "Cuántas personas cargaron ese vehículo, incluido el operador del montacargas.", "num")
+r = nota(mc, sl + 2, N,
+    "CÓMO SE LEE — Si la espera pesa más que el cargue, el cuello está en la programación de citas, no en la operación de "
+    "muelle. Referencias de productividad: 15 a 25 pallets por hora-hombre con montacargas, 200 a 350 cajas por hora-hombre "
+    "en cargue manual. Y el porcentaje de vehículos que llegaron sin pedido listo se lee junto con la hoja 6: es la misma "
+    "falta de sincronización vista desde el otro lado.", W)
+mc.freeze_panes = "A{}".format(ej); mc.print_title_rows = "{0}:{0}".format(hdr)
 # ================================================================= 9 PREGUNTAS
 W = [16, 44, 34, 42, 34, 34]; N = 6
 setup(pg, W, "1B7A4C")
@@ -826,6 +1076,7 @@ malas = [
     ("«¿Están cumpliendo la meta?»", "«¿Cuál fue el peor día del mes y qué pasó ese día?»"),
     ("«¿Tienen algún problema?»", "«Si le dieran una persona más mañana, ¿dónde la pondría y por qué?»"),
     ("«¿Quién se equivocó?»", "«¿Qué tendría que cambiar para que ese error fuera imposible?»"),
+    ("«¿Se despacha a tiempo?»", "«Muéstreme un pedido que se alistó temprano y salió tarde. ¿Qué pasó?»"),
 ]
 for i, lab in enumerate(["En vez de preguntar esto…", "…pregunta esto"], start=1):
     cc = pg.cell(row=r, column=i, value=lab)
@@ -837,32 +1088,67 @@ for mala, buena in malas:
     b = pg.cell(row=r, column=2, value=buena); b.font = f(10, True, GRN_T); b.border = BOX; b.alignment = WRAP
     pg.row_dimensions[r].height = 22
     r += 1
-r += 1
-r = banda(pg, r, N, "BANCO DE PREGUNTAS", NAVY)
+r = banda(pg, r + 1, N, "BANCO DE PREGUNTAS", NAVY)
 hdr = r
 tabla(pg, hdr, ["A quién", "Pregunta (dila así)", "Por qué esta pregunta", "Respuesta",
                 "Señal de alarma en la respuesta", "Qué hacer si aparece la señal"])
 preguntas = [
+    ("Reabastecimiento", "¿El reabastecimiento se hace en ola antes del turno o a demanda?",
+     "Define si va adelante o detrás del alistamiento.",
+     "Responden «a demanda» o «cuando avisan».",
+     "Pasar a ola antes del turno. Es la acción de mayor impacto y menor costo sobre los agotados."),
+    ("Reabastecimiento", "¿Existe punto de reorden por posición de picking o va a criterio?",
+     "Sin punto de reorden, el agotado es cuestión de suerte.",
+     "Va a criterio del reabastecedor.",
+     "Definir punto de reorden por posición según rotación. Empezar por los SKU que se repiten en la hoja 5."),
+    ("Reabastecimiento", "¿Quién decide la prioridad cuando hay cinco posiciones vacías al tiempo?",
+     "Revela si hay regla o improvisación bajo presión.",
+     "Cada quien decide, o «el que grite más fuerte».",
+     "Regla simple: primero la posición del SKU con pedido pendiente más próximo a salir."),
+    ("Reabastecimiento", "¿Cuántas personas reabastecen frente a cuántas alistan?",
+     "Un desbalance explica los agotados sin más análisis.",
+     "Menos de 1 reabastecedor por cada 6 u 8 alistadores.",
+     "Rebalancear el turno antes de contratar. Suele ser mover gente, no sumarla."),
+    ("Prioridades", "¿Existe una regla escrita de priorización de pedidos?",
+     "Sin regla escrita, la secuencia depende del turno.",
+     "No hay, o cada supervisor tiene la suya.",
+     "Escribirla y publicarla en el piso. Es una acción de cero costo y efecto inmediato."),
+    ("Prioridades", "¿Alistamiento conoce la hora de cita de cada vehículo?",
+     "Si no la conocen, alistan a ciegas contra el corte.",
+     "No la conocen o llega tarde.",
+     "Publicar la programación de citas en la zona de alistamiento, actualizada cada mañana."),
+    ("Prioridades", "¿Qué cuenta como pedido urgente y cuántos hubo ayer?",
+     "Si todo es urgente, nada lo es.",
+     "Más del 10% del día son urgentes.",
+     "Definir qué es urgente, quién lo autoriza y poner tope diario."),
+    ("Despacho", "¿Dónde se pone un pedido alistado mientras espera, y cuál es la capacidad de ese espacio?",
+     "Conecta el tiempo de espera con el staging saturado.",
+     "No hay capacidad definida ni marcación en piso.",
+     "Marcar el piso con capacidad máxima visible por posición de staging. Si no cabe, no se alista todavía."),
+    ("Despacho", "¿Quién avisa a despacho que un pedido ya está listo, y cómo?",
+     "Muchas esperas son solo falta de aviso.",
+     "Nadie avisa: despacho lo descubre al pasar.",
+     "Definir la señal de «listo para cargar». A veces basta un tablero o un color de rótulo."),
+    ("Cargue", "¿Hay secuencia de cargue por ruta de entrega?",
+     "Lo último en cargar debe ser lo primero en entregar. Casi nunca se pregunta.",
+     "Se carga como vaya llegando.",
+     "Definir secuencia de cargue por orden inverso de entrega. Ahorra tiempo en cada parada de la ruta."),
+    ("Cargue", "¿Los que cargan son los mismos que alistan?",
+     "Si son los mismos, el cargue interrumpe el alistamiento y viceversa.",
+     "Son los mismos y se turnan según la urgencia.",
+     "Separar los roles en el pico, aunque sea solo en las tres horas antes del corte."),
     ("Operario", "¿Qué es lo que más tiempo le hace perder en el día?",
      "Nombra el desperdicio real antes que cualquier indicador.",
-     "Menciona caminar o buscar producto.",
-     "Contrástalo con la hoja 3: si el desplazamiento pasa de 50%, ya tienes causa y evidencia."),
-    ("Operario", "¿Cuántas veces al día no encuentra el producto donde dice el sistema?",
-     "Estima el ERI sin esperar el conteo ciego.",
+     "Menciona esperar producto o caminar.",
+     "Contrástalo con las hojas 3 y 5: ya tienes causa y evidencia."),
+    ("Operario", "¿Cuántas veces al día llega a una posición y no hay producto?",
+     "Estima los agotados sin esperar el barrido.",
      "Más de dos o tres veces al día.",
-     "Sube la muestra del conteo ciego y revisa quién puede ajustar inventario."),
-    ("Operario", "Cuando se equivoca, ¿por qué cree que pasó?",
-     "Distingue ambigüedad de diseño de falta de método.",
-     "Menciona productos parecidos o posiciones vecinas.",
-     "Separa físicamente los SKU gemelos: es el control más efectivo y el más barato."),
+     "Contrasta con la hoja 5 y revisa el punto de reorden de esos SKU."),
     ("Operario", "¿Cuántas líneas se supone que debe hacer por hora?",
      "Verifica si existe estándar de trabajo.",
      "No sabe, o cada quien dice un número distinto.",
      "No hay estándar. Sin estándar no hay productividad que gestionar, solo esfuerzo individual."),
-    ("Operario", "¿Qué hay ahí que no debería estar?",
-     "Señala inventario muerto y zonas sin dueño.",
-     "Señala producto que lleva meses en el mismo sitio.",
-     "Anótalo como hallazgo y crúzalo con el inventario sin movimiento mayor a 90 días."),
     ("Operario", "Si usted mandara aquí, ¿qué cambiaría primero?",
      "La mejor pregunta de cierre. Sabe la respuesta y casi nunca se la piden.",
      "Responde de inmediato y con detalle.",
@@ -870,47 +1156,23 @@ preguntas = [
     ("Jefe del CEDI", "¿Cuál es su cuello de botella hoy?",
      "Mide si hay gestión o solo reacción.",
      "Responde «todo» o cambia de tema.",
-     "No hay gestión por indicadores. Empieza por instalar el tablero diario de cinco cifras."),
-    ("Jefe del CEDI", "¿Cuántas posiciones tiene y cuántas están ocupadas en este momento?",
-     "Contrasta contra tu conteo de la hoja 2.",
-     "La cifra difiere mucho de lo que contaste.",
-     "El sistema no refleja la realidad física. Prioriza exactitud de inventario."),
-    ("Jefe del CEDI", "¿Qué pasa cuando un pedido no alcanza a salir?",
-     "Revela si hay regla o improvisación.",
-     "Depende de quién esté de turno.",
-     "Falta regla de priorización. Escríbela y publícala: es una acción de cero costo."),
+     "No hay gestión por indicadores. Empieza por instalar el tablero diario."),
+    ("Jefe del CEDI", "¿Cuántos pedidos quedaron ayer alistados sin salir?",
+     "Es el inventario de trabajo terminado que nadie contabiliza.",
+     "No lo saben o el número es alto.",
+     "Medirlo diario. Un pedido alistado que no sale ocupa espacio y esconde el problema de sincronización."),
     ("Jefe del CEDI", "¿Cuándo fue el último re-slotting y con qué criterio?",
      "Más de seis meses explica buena parte del desplazamiento.",
-     "No recuerda, o se hizo «cuando se organizó la bodega».",
-     "Programa un re-slotting de los 200 SKU de mayor rotación. Es el quick win de mayor impacto."),
-    ("Jefe del CEDI", "Si le dieran una persona más mañana, ¿dónde la pondría?",
-     "Revela el cuello de botella real sin ponerlo a la defensiva.",
-     "Cualquier respuesta sirve: señala dónde duele.",
-     "Compáralo con lo que digan los operarios. Si no coinciden, el jefe no está en el piso."),
+     "No recuerda, o fue «cuando se organizó la bodega».",
+     "Programar re-slotting de los 200 SKU de mayor rotación. Es el quick win de mayor impacto."),
     ("Recepción", "¿Se recibe en flujo o por lotes al final del turno?",
      "El lote al cierre deja producto en piso toda la noche.",
      "Se recibe por lotes o «cuando hay gente».",
-     "Es causa directa de dock-to-stock alto y de CEDI lleno. Nivela la recepción durante el turno."),
-    ("Recepción", "¿Cuánto se demora un camión desde que llega hasta que el producto queda disponible?",
-     "Es el dock-to-stock declarado; contrástalo con lo que mediste.",
-     "No lo saben o dan un rango muy amplio.",
-     "No se mide. Pídelo en la solicitud de datos y móntalo como indicador diario."),
-    ("Despacho", "¿Qué los detiene más: esperar producto, esperar documento o esperar camión?",
-     "Ubica el cuello sin necesidad de datos.",
-     "Responden «esperar camión».",
-     "Revisa la hoja 6: si la espera pesa más que el cargue, el problema es la programación de citas."),
-    ("Despacho / chequeo", "¿Qué error es el que más se repite?",
-     "Te da el Pareto antes de tener los datos.",
-     "Mencionan referencias parecidas o cantidades.",
-     "Es ambigüedad de diseño. Separación física y unidad de manejo, no más capacitación."),
-    ("Calidad / devoluciones", "¿Quién autoriza la disposición final y cuándo fue la última vez?",
-     "Zona sin dueño ni fecha es donde se acumula el espacio.",
-     "No hay responsable claro o pasaron meses.",
-     "Asigna dueño y fecha límite. Suele liberar espacio de inmediato."),
+     "Nivelar la recepción durante el turno. Es causa directa de dock-to-stock alto."),
     ("Gestión humana", "¿Cuánta gente entró y salió del CEDI en los últimos seis meses?",
      "La rotación alta explica errores sin que nadie tenga la culpa.",
      "Rotación por encima del 30% anual.",
-     "Con rotación alta siempre vas a tener novatos. Refuerza certificación antes de operar solo."),
+     "Con rotación alta siempre hay novatos. Reforzar certificación antes de operar solo."),
 ]
 r = hdr + 1
 for who, q, why, alarma, accion in preguntas:
@@ -925,17 +1187,42 @@ for who, q, why, alarma, accion in preguntas:
     pg.cell(row=r, column=4).font = f(10, color="00329B")
     pg.row_dimensions[r].height = 40
     r += 1
-ayuda(pg, "D{}:D{}".format(hdr + 1, r - 1), "Respuesta", "Escribe la respuesta textual, no tu interpretación. Las palabras exactas valen más después.")
+ayuda(pg, "D{}:D{}".format(hdr + 1, r - 1), "Respuesta",
+      "Escribe la respuesta textual, no tu interpretación. Las palabras exactas valen más después.")
 pg.freeze_panes = "B{}".format(hdr + 1); pg.print_title_rows = "{0}:{0}".format(hdr)
 
 # ================================================================= 10 SOLICITUD DATOS
-W = [5, 18, 56, 16, 22, 17, 12, 28]; N = 8
+W = [5, 18, 58, 16, 22, 17, 12, 28]; N = 8
 setup(sd, W, "1B7A4C")
 r = titulo(sd, 1, N, "10 · SOLICITUD DE INFORMACIÓN",
            "Entrégala hoy, por escrito, con responsable y fecha. Si te vas sin dejarla, pierdes una semana esperando.")
+datos = [
+    ("WMS / ERP", "Marcas de tiempo por pedido: liberación, inicio y fin de alistamiento, fin de chequeo, inicio y fin de cargue, y salida del vehículo", "CSV plano"),
+    ("WMS / ERP", "Movimientos de salida a nivel de línea: fecha, hora, SKU, cantidad, ubicación, operario, pedido, cliente y ruta", "CSV plano"),
+    ("WMS / ERP", "Registro de reposiciones a posición de picking, con hora de solicitud y hora de ejecución", "CSV plano"),
+    ("WMS / ERP", "Líneas con faltante o short pick, con su causal", "CSV plano"),
+    ("WMS / ERP", "Movimientos de entrada con hora de llegada del vehículo Y hora de ubicación del producto (dock-to-stock)", "CSV plano"),
+    ("WMS / ERP", "Snapshot de inventario por ubicación, al cierre de hoy", "CSV plano"),
+    ("WMS / ERP", "Maestro de ubicaciones: posiciones por zona y por tipo, indicando cuáles son cara de picking", "Excel"),
+    ("WMS / ERP", "Maestro de SKU: dimensiones, peso, empaque, paletización y punto de reorden vigente", "Excel"),
+    ("WMS / ERP", "Devoluciones y notas crédito con su causal", "CSV plano"),
+    ("WMS / ERP", "Resultados de los últimos conteos cíclicos y ajustes de inventario con su causal", "Excel"),
+    ("Operación", "Regla de priorización de pedidos vigente, como documento", "PDF o Word"),
+    ("Operación", "Pedidos que quedaron alistados sin salir, por día, últimas 13 semanas", "Excel"),
+    ("Gestión humana", "Headcount por turno y por función, separando alistamiento, reabastecimiento y cargue", "Excel"),
+    ("Gestión humana", "Horas ordinarias y horas extra por período", "Excel"),
+    ("Gestión humana", "Ausentismo, rotación y antigüedad promedio", "Excel"),
+    ("Transporte", "Programación de citas de vehículos frente a la hora real de llegada y de salida", "CSV plano"),
+    ("Transporte", "Vehículos programados frente a ejecutados, y ocupación del vehículo despachado", "Excel"),
+    ("Sitio", "Layout a escala con zonas, muelles, cara de picking y pasillos", "PDF o DWG"),
+    ("Finanzas", "Costo total del CEDI del último trimestre", "Excel"),
+]
+SD1 = 8
+SD2 = SD1 + len(datos) - 1
 sd.cell(row=3, column=5, value="AVANCE DE ENTREGA").font = f(9, True, "46525E")
 sd.cell(row=3, column=5).alignment = RGT
-cell = sd.cell(row=3, column=6, value='=IF(COUNTA($C$8:$C$23)=0,"",COUNTIF($G$8:$G$23,"Sí")/COUNTA($C$8:$C$23))')
+cell = sd.cell(row=3, column=6,
+    value='=IF(COUNTA($C${0}:$C${1})=0,"",COUNTIF($G${0}:$G${1},"Sí")/COUNTA($C${0}:$C${1}))'.format(SD1, SD2))
 cell.number_format = "0%"; cell.font = f(13, True, NAVY_D); cell.alignment = CTR
 cell.fill = PatternFill("solid", fgColor=GREY_L); cell.border = BOX
 KEY["datos"] = "'10 Solicitud datos'!$F$3"
@@ -943,47 +1230,32 @@ r = banda(sd, 5, N, "CONDICIONES DE LA ENTREGA — DÍSELO ASÍ AL RESPONSABLE",
 r = linea(sd, r, N, W, "▪",
     "Período: últimas 13 semanas. Formato Excel o CSV plano, un registro por fila. Sin tablas dinámicas, sin consolidados, "
     "sin resúmenes. Si mandan un reporte ya cocinado no sirve: los promedios esconden el pico de las últimas tres horas "
-    "antes del corte, el operario con menos de 90 días y los diez SKU que generan la mitad de los errores.", et_color=TAPE)
-hdr = 7
-tabla(sd, hdr, ["#", "Área", "Información solicitada", "Formato", "Responsable", "Fecha compromiso", "Recibido", "Observación"])
-datos = [
-    ("WMS / ERP", "Movimientos de salida a nivel de línea: fecha, hora, SKU, cantidad, ubicación, operario, pedido, cliente y ruta", "CSV plano"),
-    ("WMS / ERP", "Movimientos de entrada con hora de llegada del vehículo Y hora de ubicación del producto (dock-to-stock)", "CSV plano"),
-    ("WMS / ERP", "Snapshot de inventario por ubicación, al cierre de hoy", "CSV plano"),
-    ("WMS / ERP", "Maestro de ubicaciones: posiciones por zona y por tipo", "Excel"),
-    ("WMS / ERP", "Maestro de SKU: dimensiones, peso, empaque y paletización", "Excel"),
-    ("WMS / ERP", "Trazabilidad de pedidos: creación, corte, liberación, fin de alistamiento y despacho", "CSV plano"),
-    ("WMS / ERP", "Devoluciones y notas crédito con su causal", "CSV plano"),
-    ("WMS / ERP", "Resultados de los últimos conteos cíclicos y ajustes de inventario con su causal", "Excel"),
-    ("Gestión humana", "Headcount por turno y por función", "Excel"),
-    ("Gestión humana", "Horas ordinarias y horas extra por período", "Excel"),
-    ("Gestión humana", "Ausentismo, rotación y antigüedad promedio", "Excel"),
-    ("Transporte", "Vehículos programados frente a ejecutados", "Excel"),
-    ("Transporte", "Hora de llegada y de salida por vehículo", "CSV plano"),
-    ("Transporte", "Ocupación del vehículo despachado", "Excel"),
-    ("Sitio", "Layout a escala con zonas, muelles y pasillos", "PDF o DWG"),
-    ("Finanzas", "Costo total del CEDI del último trimestre", "Excel"),
-]
+    "antes del corte, el operario con menos de 90 días y los pedidos que se alistaron temprano y salieron tarde.", et_color=TAPE)
+tabla(sd, 7, ["#", "Área", "Información solicitada", "Formato", "Responsable", "Fecha compromiso", "Recibido", "Observación"])
 for i, (area, info, fmt) in enumerate(datos):
-    rr = 8 + i
+    rr = SD1 + i
     sd.cell(row=rr, column=1, value=i + 1)
     sd.cell(row=rr, column=2, value=area)
     sd.cell(row=rr, column=3, value=info)
     sd.cell(row=rr, column=4, value=fmt)
-cuerpo(sd, 8, 23, N, entrada=(5, 6, 7, 8), h=30)
-for rr in range(8, 24):
+cuerpo(sd, SD1, SD2, N, entrada=(5, 6, 7, 8), h=30)
+for rr in range(SD1, SD2 + 1):
     sd.cell(row=rr, column=1).alignment = CTR
     sd.cell(row=rr, column=1).fill = PatternFill("solid", fgColor=GREY_H)
     sd.cell(row=rr, column=2).font = f(9, True, TAPE)
     sd.cell(row=rr, column=4).alignment = CTR
     sd.cell(row=rr, column=4).font = f(9, color="6E7A86")
     sd.cell(row=rr, column=7).alignment = CTR
-lista(sd, "G8:G23", ["Sí", "No", "Parcial"], "¿Ya lo recibiste?", "Marca Sí solo cuando tengas el archivo en la mano y abra correctamente.")
-ayuda(sd, "E8:E23", "Responsable", "Nombre y cargo de quien se comprometió a entregarlo. Sin nombre no hay compromiso.")
-ayuda(sd, "F8:F23", "Fecha compromiso", "Fecha que acordaron. Formato DD/MM/AAAA.")
-sd.conditional_formatting.add("G8:G23", CellIsRule(operator="equal", formula=['"Sí"'],
+lista(sd, "G{}:G{}".format(SD1, SD2), ["Sí", "No", "Parcial"], "¿Ya lo recibiste?",
+      "Marca Sí solo cuando tengas el archivo en la mano y abra correctamente.")
+ayuda(sd, "E{}:E{}".format(SD1, SD2), "Responsable", "Nombre y cargo de quien se comprometió a entregarlo. Sin nombre no hay compromiso.")
+ayuda(sd, "F{}:F{}".format(SD1, SD2), "Fecha compromiso", "Fecha que acordaron. Formato DD/MM/AAAA.")
+sd.conditional_formatting.add("G{}:G{}".format(SD1, SD2), CellIsRule(operator="equal", formula=['"Sí"'],
     fill=PatternFill("solid", fgColor=GRN_BG), font=f(10, True, GRN_T)))
-sd.freeze_panes = "A8"; sd.print_title_rows = "{0}:{0}".format(hdr)
+r = nota(sd, SD2 + 2, N,
+    "Los cuatro primeros renglones son los que permiten reconstruir el ciclo del pedido con cientos de casos en vez de los "
+    "20 que sigas a mano. Si solo consigues uno, que sea el primero: las marcas de tiempo por pedido.", W)
+sd.freeze_panes = "A{}".format(SD1); sd.print_title_rows = "7:7"
 
 # ================================================================= 11 HALLAZGOS
 W = [5, 46, 26, 38, 42, 20, 15, 12]; N = 8
@@ -992,8 +1264,9 @@ r = titulo(hz, 1, N, "11 · HALLAZGOS Y COMPROMISOS DEL DÍA",
            "El producto de la visita. Un hallazgo es un hecho con número: si no tiene cifra, es una opinión y no entra aquí.")
 r = banda(hz, 4, N, "CÓMO SE ESCRIBE UN HALLAZGO", NAVY)
 r = linea(hz, r, N, W, "BIEN",
-    "«Conté 5 pasillos: 93% de ocupación y 15% de posiciones parciales.» · «El operario que acompañé caminó el 58% de su ciclo.» "
-    "· «Hay 40 pallets en piso; les puse etiqueta con fecha de hoy.»", et_color=GRN_T)
+    "«Los 20 pedidos que seguí pasaron el 71% de su ciclo quietos; en promedio esperaron 3 h 20 min alistados antes de "
+    "cargar.» · «En el barrido de las 14:00, el 23% de las posiciones de picking estaban vacías o en riesgo.» · «Conté 5 "
+    "pasillos: 93% de ocupación.»", et_color=GRN_T)
 r = linea(hz, r, N, W, "MAL",
     "«La bodega está desordenada.» · «Falta compromiso del personal.» · «Se ve mucho inventario.» Nada de eso se puede "
     "medir después ni discutir con datos.", et_color=RED_T)
@@ -1001,13 +1274,12 @@ hdr = r + 1
 tabla(hz, hdr, ["#", "Hallazgo (hecho con número)", "Evidencia", "Causa probable",
                 "Acción propuesta", "Dueño", "Fecha", "Prioridad"])
 ej = hdr + 1
-ejemplo(hz, ej, N, ["EJ", "Ocupación de 93% en la muestra de 5 pasillos, con 15% de posiciones parciales.",
-                    "Hoja 2 + fotos 09:15", "Inventario sin movimiento ocupando posiciones y parciales sin consolidar.",
-                    "Purga de SKU sin salidas mayores a 180 días y consolidación de parciales.",
+ejemplo(hz, ej, N, ["EJ", "Los 20 pedidos seguidos pasaron el 71% de su ciclo quietos, con 3 h 20 min promedio alistados esperando cargue.",
+                    "Hoja 6 + fotos de staging 15:40", "Se alista contra el corte y no contra la hora de cita del vehículo.",
+                    "Publicar la programación de citas en alistamiento y alistar por hora de cita.",
                     "Jefe del CEDI", "15/09/2026", "Alta"])
 d1, d2 = ej + 1, ej + 15
-for i, rr in enumerate(range(d1, d2 + 1), start=1):
-    hz.cell(row=rr, column=1, value=i)
+for i, rr in enumerate(range(d1, d2 + 1), start=1): hz.cell(row=rr, column=1, value=i)
 cuerpo(hz, d1, d2, N, entrada=(2, 3, 4, 5, 6, 7, 8), h=32)
 for rr in range(d1, d2 + 1):
     hz.cell(row=rr, column=1).alignment = CTR
@@ -1015,7 +1287,7 @@ for rr in range(d1, d2 + 1):
     hz.cell(row=rr, column=7).alignment = CTR
     hz.cell(row=rr, column=8).alignment = CTR
 lista(hz, "H{}:H{}".format(d1, d2), ["Alta", "Media", "Baja"], "Prioridad",
-      "Alta = bloquea otras mejoras o cuesta dinero todos los días. Empieza por exactitud de inventario y espacio.")
+      "Alta = bloquea otras mejoras o cuesta dinero todos los días. Empieza por exactitud de inventario y por sincronización de despacho.")
 ayuda(hz, "B{}:B{}".format(d1, d2), "Hallazgo", "Un hecho con número. Si no tiene cifra, todavía no es un hallazgo.")
 ayuda(hz, "C{}:C{}".format(d1, d2), "Evidencia", "De dónde sale: hoja del archivo, foto con hora, planilla, o quién lo dijo.")
 ayuda(hz, "D{}:D{}".format(d1, d2), "Causa probable", "Tu hipótesis, marcada como hipótesis. Se confirma con los datos que pediste.")
@@ -1026,8 +1298,8 @@ hz.conditional_formatting.add("H{}:H{}".format(d1, d2), CellIsRule(operator="equ
     fill=PatternFill("solid", fgColor=RED_BG), font=f(10, True, RED_T)))
 r = nota(hz, d2 + 2, N,
     "EN LA REUNIÓN DE CIERRE — Devuelve tres hallazgos, no quince. Deja la solicitud de datos firmada. Acuerda UNA sola "
-    "acción que empiece mañana (normalmente: llevar el registro de agotados de picking, que cuesta cero). Y fija la "
-    "segunda visita en otro día de la semana: un lunes y un viernes son operaciones distintas.", W)
+    "acción que empiece mañana. Y fija la segunda visita en otro día de la semana: un lunes y un viernes son operaciones "
+    "distintas, y el porcentaje de espera del pedido cambia con el perfil de carga.", W)
 hz.freeze_panes = "B{}".format(ej); hz.print_title_rows = "{0}:{0}".format(hdr)
 
 # ================================================================= GLOSARIO
@@ -1040,28 +1312,33 @@ tabla(gl, hdr, ["Término", "Qué significa", "Por qué importa en esta evaluaci
 terminos = [
     ("CEDI", "Centro de distribución: la bodega donde se recibe, almacena, alista y despacha.", "Es la unidad que estás evaluando."),
     ("SKU", "Cada referencia distinta de producto. Dos sabores del mismo artículo son dos SKU.", "Los SKU parecidos entre sí son la causa más común de error de despacho."),
-    ("Línea de pedido", "Cada renglón de un pedido: un SKU con su cantidad.", "La productividad se mide en líneas por hora, no en unidades."),
+    ("Línea de pedido", "Cada renglón de un pedido: un SKU con su cantidad.", "Es el denominador de casi todo: productividad, errores y agotados."),
+    ("Ciclo del pedido", "Tiempo total desde que el pedido se libera hasta que el vehículo sale.", "Es la medida que ve el cliente. Todo lo demás es interno."),
+    ("Tiempo de espera del pedido", "La parte del ciclo en que el pedido no avanza: ni se alista ni se carga.", "En la mayoría de CEDI es 60 a 80% del ciclo. Es el número que reencuadra la conversación."),
     ("Posición", "Cada hueco de almacenamiento donde cabe un pallet o una cantidad definida.", "La ocupación se mide sobre posiciones, no sobre metros cuadrados."),
+    ("Cara de picking", "El frente de posiciones desde donde el operario toma producto para los pedidos.", "Es lo que se recorre en los barridos. No incluye el almacenamiento en altura."),
     ("Ocupación", "Porcentaje de posiciones ocupadas sobre las habilitadas.", "Por encima de 90% la operación entra en congestión."),
     ("Capacidad fantasma", "Posiciones que el sistema ve ocupadas pero que están a medio llenar.", "Es espacio que se recupera consolidando, sin comprar un metro más."),
     ("Efecto panal", "Huecos inutilizables que quedan entre producto mal acomodado.", "Es la forma física de la capacidad fantasma."),
     ("Alistamiento (picking)", "Tomar de las posiciones los productos que pide un pedido.", "Es donde se concentra la mano de obra y donde nacen los errores."),
     ("Slotting", "La decisión de qué producto va en cuál posición.", "Un slotting desactualizado hace caminar de más al operario todo el día."),
-    ("Zona dorada", "Las posiciones entre cintura y hombro, cerca del muelle.", "Ahí deben estar los SKU de mayor rotación. Si no lo están, se pierde tiempo en cada línea."),
-    ("Reabastecimiento", "Mover producto desde almacenamiento hasta la posición de picking.", "Si va detrás del picking, el operario se queda sin producto."),
-    ("Ola", "Reabastecer o alistar por bloques planificados en lugar de por demanda inmediata.", "El reabastecimiento en ola antes del turno elimina los agotados internos."),
-    ("Agotado interno", "Posición de picking vacía habiendo pedido pendiente.", "Causa oculta número uno de baja productividad. Casi nadie la mide."),
-    ("Staging", "Zona donde se acumula el pedido alistado mientras espera el vehículo.", "Un staging desbordado indica cuello en transporte, no en alistamiento."),
+    ("Zona dorada", "Las posiciones entre cintura y hombro, cerca del muelle.", "Ahí deben estar los SKU de mayor rotación."),
+    ("Reabastecimiento", "Mover producto desde almacenamiento hasta la cara de picking.", "Si va detrás del alistamiento, el operario se queda sin producto."),
+    ("Ola", "Reabastecer o alistar por bloques planificados en lugar de por demanda inmediata.", "El reabastecimiento en ola antes del turno elimina la mayoría de los agotados."),
+    ("Punto de reorden", "Nivel de inventario en la posición de picking que dispara la reposición.", "Sin punto de reorden, el agotado depende de que alguien lo vea a tiempo."),
+    ("Agotado interno", "Posición de picking vacía habiendo pedido pendiente.", "Detiene al operario y muchas veces termina en un faltante al cliente."),
+    ("Short pick", "Línea que se alista incompleta porque no había producto suficiente.", "Es el agotado visto desde el sistema. Sirve para validar lo que observaste."),
+    ("Staging", "Zona donde se acumula el pedido alistado mientras espera el vehículo.", "Un staging desbordado indica falta de sincronización, no falta de gente."),
+    ("Secuencia de cargue", "El orden en que se sube la mercancía al vehículo.", "Lo último en cargar debe ser lo primero en entregar. Ahorra tiempo en cada parada."),
+    ("Ventana de cita", "Franja horaria asignada a un vehículo para cargar.", "Es la referencia contra la cual se mide si se alistó en el orden correcto."),
+    ("Corte de pedidos", "Hora límite para recibir pedidos que salen ese mismo día.", "Las tres horas anteriores concentran el pico, los errores y las esperas."),
     ("Dock-to-stock", "Horas entre que llega el camión y el producto queda disponible para alistar.", "Si supera 8 horas, el producto se queda en piso: es lo que ves como CEDI lleno."),
-    ("Cross-dock", "Producto que entra y sale sin pasar por almacenamiento.", "Bien hecho ahorra espacio; mal hecho invade los pasillos de maniobra."),
     ("ERI", "Exactitud del Registro de Inventario: qué porcentaje de ubicaciones tiene lo que el sistema dice.", "Con ERI bajo el operario trabaja con información falsa y todo lo demás rinde poco."),
     ("Conteo ciego", "Contar sin ver la cantidad que dice el sistema.", "Es la única forma de medir el ERI sin sesgo."),
     ("Conteo cíclico", "Conteos parciales y frecuentes en vez de un inventario general al año.", "Es lo que mantiene el ERI alto en el tiempo."),
     ("Clasificación ABC", "Ordenar los SKU por participación en las salidas: A los que más salen, C los que menos.", "Define dónde debe estar cada producto y cuánto inventario tener."),
-    ("Corte de pedidos", "Hora límite para recibir pedidos que salen ese mismo día.", "Las tres horas anteriores al corte concentran el pico y los errores."),
     ("Order fill rate", "Porcentaje de líneas despachadas completas sobre las pedidas.", "Mide si el cliente recibió lo que pidió."),
     ("Pedido perfecto", "A tiempo, completo, sin daño y con documento correcto. Se multiplican entre sí.", "Es el indicador que resume la confiabilidad del despacho."),
-    ("Muestreo de trabajo", "Observaciones instantáneas y aleatorias para estimar cómo se reparte el tiempo.", "Da el porcentaje de tiempo que no agrega valor sin necesidad de WMS."),
     ("Poka-yoke", "Un control que hace imposible el error, no que lo detecta después.", "Escaneo obligatorio o verificación por peso valen más que cualquier capacitación."),
     ("Gemba", "El lugar donde ocurre el trabajo real.", "La evaluación se hace en el piso, no en la sala de juntas."),
 ]
@@ -1075,9 +1352,8 @@ for t, q, p in terminos:
     gl.row_dimensions[r].height = 30
     r += 1
 gl.freeze_panes = "A{}".format(hdr + 1); gl.print_title_rows = "{0}:{0}".format(hdr)
-
 # ================================================================= RESUMEN
-W = [44, 14, 15, 14, 52, 50]; N = 6
+W = [46, 14, 15, 14, 52, 50]; N = 6
 setup(rs, W, NAVY)
 r = titulo(rs, 1, N, "RESUMEN DEL DÍA",
            "Se llena solo desde las hojas de captura. Es lo que devuelves en la reunión de cierre: hechos con número, no opiniones.")
@@ -1092,30 +1368,46 @@ filas = [
      '=IF($B{r}="","—",IF($B{r}>0.15,"CRÍTICO",IF($B{r}>0.1,"ATENCIÓN","OK")))',
      '=IF($B{r}="","Pendiente de medir",IF($B{r}>0.15,"Posiciones que el sistema ve ocupadas y no almacenan nada.",IF($B{r}>0.1,"Hay espacio recuperable sin comprar un metro más.","Sin efecto panal relevante.")))',
      "Programar consolidación de posiciones parciales el próximo fin de semana. No requiere inversión."),
+    ("Pallets fuera de posición", KEY["pallets"], "0", "0",
+     '=IF($B{r}="","—",IF($B{r}>30,"CRÍTICO",IF($B{r}>0,"ATENCIÓN","OK")))',
+     '=IF($B{r}="","Pendiente de medir",IF($B{r}>30,"Backlog físico grande. Verificar a las 48 h cuántos siguen con la etiqueta original.",IF($B{r}>0,"Verificar a las 48 h cuáles no se movieron.","Sin producto fuera de posición.")))',
+     "Fijar meta de dock-to-stock menor a 4 horas y regla de piso libre al cierre de turno, con verificación diaria."),
     ("Desplazamiento sobre el ciclo de alistamiento", KEY["desp"], "0.0%", "menos de 40%",
      '=IF($B{r}="","—",IF($B{r}>0.5,"CRÍTICO",IF($B{r}>0.4,"ATENCIÓN","OK")))',
-     '=IF($B{r}="","Pendiente de medir",IF($B{r}>0.5,"El problema es el slotting, no la gente. Correr más rápido no arregla una ruta mal diseñada.",IF($B{r}>0.4,"Alto pero manejable. Vale un re-slotting de los SKU de mayor rotación.","Desplazamiento razonable. La pérdida está en búsqueda, espera o reproceso.")))',
+     '=IF($B{r}="","Pendiente de medir",IF($B{r}>0.5,"El problema es el slotting, no la gente. Correr más rápido no arregla una ruta mal diseñada.",IF($B{r}>0.4,"Alto pero manejable. Vale un re-slotting de los SKU de mayor rotación.","Desplazamiento razonable. La pérdida está en otra parte del flujo.")))',
      "Re-slotting de los 200 SKU de mayor rotación a la zona dorada. Se hace en un fin de semana."),
     ("ERI por ubicación (conteo ciego)", KEY["eri"], "0.0%", "más de 97%",
      '=IF($B{r}="","—",IF($B{r}<0.95,"CRÍTICO",IF($B{r}<0.97,"ATENCIÓN","OK")))',
-     '=IF($B{r}="","Pendiente de medir",IF($B{r}<0.95,"El operario trabaja con información falsa. Es la causa raíz de casi todo lo demás.",IF($B{r}<0.97,"Aceptable pero no confiable.","Buen ERI. Los errores de despacho tienen otra causa.")))',
+     '=IF($B{r}="","Pendiente de medir",IF($B{r}<0.95,"El operario trabaja con información falsa. Es la causa raíz de casi todo lo demás.",IF($B{r}<0.97,"Aceptable pero no confiable.","Buen ERI. Los problemas de despacho tienen otra causa.")))',
      "Conteo cíclico diario en zona A y restringir quién puede ajustar inventario. Va antes que slotting y que chequeo."),
-    ("Tiempo que no agrega valor (muestreo)", KEY["novalor"], "0.0%", "menos de 35%",
-     '=IF($B{r}="","—",IF($B{r}>0.5,"CRÍTICO",IF($B{r}>0.35,"ATENCIÓN","OK")))',
-     '=IF($B{r}="","Pendiente de medir",IF($B{r}>0.5,"Más de la mitad del día no agrega valor. Es diseño de la operación, no esfuerzo de la gente.",IF($B{r}>0.35,"Rango habitual en CEDI sin estándares de trabajo.","Operación con poco desperdicio visible.")))',
-     "Estándar de líneas por hora con tablero visual en piso, y reabastecimiento en ola antes del turno."),
+    ("Posiciones de picking en riesgo antes del corte", KEY["riesgo"], "0.0%", "menos de 10%",
+     '=IF($B{r}="","—",IF($B{r}>0.2,"CRÍTICO",IF($B{r}>0.1,"ATENCIÓN","OK")))',
+     '=IF($B{r}="","Pendiente de medir",IF($B{r}>0.2,"El reabastecimiento no aguanta el pico: una de cada cinco posiciones llega vacía o casi vacía al corte.",IF($B{r}>0.1,"El reabastecimiento se queda corto justo cuando más se le exige.","El reabastecimiento aguanta el pico.")))',
+     "Pasar el reabastecimiento a ola antes del turno y anticipar la ola del pico dos horas antes del corte."),
+    ("Agotados por cada 100 líneas", KEY["agot100"], "0.00", "menos de 1",
+     '=IF($B{r}="","—",IF($B{r}>3,"CRÍTICO",IF($B{r}>1,"ATENCIÓN","OK")))',
+     '=IF($B{r}="","Pendiente de medir",IF($B{r}>3,"El operario se topa con una posición vacía cada 30 líneas o menos. Detiene el ciclo y termina en faltantes al cliente.",IF($B{r}>1,"Frecuencia alta. Revisar el punto de reorden de los SKU que se repiten.","Frecuencia baja. El reabastecimiento responde.")))',
+     "Definir punto de reorden por posición según rotación, empezando por los SKU que se repiten en la hoja 5."),
+    ("Alistado esperando cargue (min)", KEY["espera_cargue"], "0", "menos de 60 min",
+     '=IF($B{r}="","—",IF($B{r}>180,"CRÍTICO",IF($B{r}>60,"ATENCIÓN","OK")))',
+     '=IF($B{r}="","Pendiente de medir",IF($B{r}>180,"El pedido termina y se queda horas ocupando staging. Es trabajo hecho que no llega al cliente.",IF($B{r}>60,"Espera apreciable. Revisar la sincronización entre alistamiento y transporte.","El pedido sale poco después de quedar listo.")))',
+     "Alistar contra la hora de cita del vehículo y no contra el corte. Publicar la programación de citas en alistamiento."),
+    ("% del ciclo del pedido en espera", KEY["pct_espera"], "0.0%", "menos de 40%",
+     '=IF($B{r}="","—",IF($B{r}>0.6,"CRÍTICO",IF($B{r}>0.4,"ATENCIÓN","OK")))',
+     '=IF($B{r}="","Pendiente de medir",IF($B{r}>0.6,"La mayor parte del ciclo el pedido está quieto. El problema no es la velocidad de la gente: es la sincronización.",IF($B{r}>0.4,"Espera significativa dentro del ciclo. Hay margen sin tocar la productividad.","El pedido fluye. La mejora está en la velocidad de cada estación.")))',
+     "Atacar la espera antes que la velocidad: sincronizar liberación, alistamiento y citas de vehículos. Rinde más y no cuesta."),
+    ("Pedidos alistados fuera de secuencia", KEY["secuencia"], "0.0%", "menos de 10%",
+     '=IF($B{r}="","—",IF($B{r}>0.25,"CRÍTICO",IF($B{r}>0.1,"ATENCIÓN","OK")))',
+     '=IF($B{r}="","Pendiente de medir",IF($B{r}>0.25,"Se alista en un orden distinto al de salida: el staging se llena de pedidos que no salen y esperan los que sí.",IF($B{r}>0.1,"Desvíos frecuentes de la secuencia. Revisar quién puede saltarse la regla.","Se alista en el orden correcto.")))',
+     "Escribir y publicar la regla de priorización, y dar a alistamiento la programación de citas actualizada cada mañana."),
     ("Permanencia promedio en muelle (min)", KEY["muelle"], "0", "menos de 90 min",
      '=IF($B{r}="","—",IF($B{r}>180,"CRÍTICO",IF($B{r}>90,"ATENCIÓN","OK")))',
-     '=IF($B{r}="","Pendiente de medir",IF($B{r}>180,"El cuello de botella está en muelle o en staging, no en alistamiento.",IF($B{r}>90,"Revisar programación de citas y secuencia de cargue.","Muelle fluido.")))',
-     "Sistema de citas y alistar contra la hora de cita, no contra el corte. Empezar por las rutas de mayor volumen."),
-    ("Pallets en piso etiquetados hoy", KEY["pallets"], "0", "0",
-     '=IF($B{r}="","—",IF($B{r}>30,"CRÍTICO",IF($B{r}>0,"ATENCIÓN","OK")))',
-     '=IF($B{r}="","Pendiente de medir",IF($B{r}>30,"Backlog físico grande. Verificar a las 48 h cuántos siguen con la etiqueta original.",IF($B{r}>0,"Verificar a las 48 h cuáles no se movieron.","Sin producto fuera de posición.")))',
-     "Fijar meta de dock-to-stock menor a 4 horas y regla de piso libre al cierre de cada turno, con verificación diaria."),
-    ("Agotados internos de picking en el turno", KEY["agotados"], "0", "0",
-     '=IF($B{r}="","—",IF($B{r}>10,"CRÍTICO",IF($B{r}>0,"ATENCIÓN","OK")))',
-     '=IF($B{r}="","Pendiente de medir",IF($B{r}>10,"El reabastecimiento va detrás del picking y detiene al operario varias veces al día.",IF($B{r}>0,"Cuantificar los minutos perdidos por evento.","El reabastecimiento va adelante del picking.")))',
-     "Pasar el reabastecimiento a ola antes del turno y revisar el punto de reorden de los SKU que se repiten."),
+     '=IF($B{r}="","Pendiente de medir",IF($B{r}>180,"El vehículo pasa más de tres horas adentro. Se paga en flete y en muelles bloqueados.",IF($B{r}>90,"Revisar programación de citas y secuencia de cargue.","Muelle fluido.")))',
+     "Sistema de citas con ventanas reales y secuencia de cargue por orden inverso de entrega."),
+    ("Vehículos que llegaron sin el pedido listo", KEY["sinlisto"], "0.0%", "0%",
+     '=IF($B{r}="","—",IF($B{r}>0.2,"CRÍTICO",IF($B{r}>0,"ATENCIÓN","OK")))',
+     '=IF($B{r}="","Pendiente de medir",IF($B{r}>0.2,"Uno de cada cinco camiones espera a que le terminen el pedido. Es la misma falta de sincronización de la hoja 6, vista desde el muelle.",IF($B{r}>0,"Ocurre pero no es lo general. Revisar qué rutas se repiten.","El pedido siempre estaba listo cuando llegó el vehículo.")))',
+     "Fijar que un pedido solo se libera a muelle cuando está chequeado, y alistar por hora de cita."),
     ("Avance del checklist del día", KEY["checklist"], "0%", "100%",
      '=IF($B{r}="","—",IF($B{r}<1,"EN CURSO","OK"))',
      '=IF($B{r}="","Sin iniciar",IF($B{r}<1,"Quedan acciones pendientes antes de cerrar el día.","Checklist completo."))',
@@ -1135,10 +1427,9 @@ for lab, src, nf, ref, estado, signif, accion in filas:
     d = rs.cell(row=r, column=4, value=estado.format(r=r)); d.alignment = CTR; d.font = f(10, True)
     e = rs.cell(row=r, column=5, value=signif.format(r=r)); e.font = f(9.5, color="46525E"); e.alignment = WRAP
     g = rs.cell(row=r, column=6, value=accion); g.font = f(9, color=GRN_T); g.alignment = WRAP
-    for c_ in range(1, N + 1):
-        rs.cell(row=r, column=c_).border = BOX
+    for c_ in range(1, N + 1): rs.cell(row=r, column=c_).border = BOX
     rs.cell(row=r, column=1).alignment = WRAPC
-    rs.row_dimensions[r].height = 40
+    rs.row_dimensions[r].height = 42
     r += 1
 est_rng = "D{}:D{}".format(hdr + 1, r - 1)
 for txt, bg, fg in (("CRÍTICO", RED_BG, RED_T), ("ATENCIÓN", AMB_BG, AMB_T),
@@ -1146,14 +1437,14 @@ for txt, bg, fg in (("CRÍTICO", RED_BG, RED_T), ("ATENCIÓN", AMB_BG, AMB_T),
     rs.conditional_formatting.add(est_rng, CellIsRule(operator="equal", formula=['"{}"'.format(txt)],
         fill=PatternFill("solid", fgColor=bg), font=f(10, True, fg)))
 rs.conditional_formatting.add("A{}:F{}".format(hdr + 1, r - 1),
-    FormulaRule(formula=['$D{}="CRÍTICO"'.format(hdr + 1)],
-                fill=PatternFill("solid", fgColor="FDF3F2")))
+    FormulaRule(formula=['$D{}="CRÍTICO"'.format(hdr + 1)], fill=PatternFill("solid", fgColor="FDF3F2")))
 r = nota(rs, r + 1, N,
-    "CÓMO SE USA — Los estados se calculan contra referencias de industria, no contra la meta de Madrid. Sirven para "
-    "ordenar por dónde empezar. Hay una precedencia que conviene respetar: primero exactitud de inventario, después "
-    "espacio, después slotting, después método, y de último los controles de verificación. Atacar el orden al revés "
-    "cuesta el doble y rinde la mitad.", W)
+    "CÓMO SE USA — Los estados se calculan contra referencias de industria, no contra la meta de Madrid: sirven para "
+    "ordenar por dónde empezar. La precedencia que conviene respetar es: exactitud de inventario → espacio → "
+    "reabastecimiento → secuencia de alistamiento → cargue y muelle. Y una advertencia de lectura: si el pedido pasa "
+    "quieto la mayor parte de su ciclo, cualquier plan que empiece por «que la gente alistе más rápido» va a rendir poco, "
+    "porque no es ahí donde se está yendo el tiempo.", W)
 rs.freeze_panes = "A{}".format(hdr + 1); rs.print_title_rows = "{0}:{0}".format(hdr)
 
 wb.save(OUT)
-print("OK ->", OUT, "| validaciones:", _dvc[0])
+print("OK ->", OUT, "| hojas:", len(wb.sheetnames), "| validaciones:", _dvc[0])
