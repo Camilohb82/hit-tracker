@@ -1,0 +1,529 @@
+<title>Día 1 en Piso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#ECEFF2; --surface:#FFFFFF; --surface-2:#F5F7F9; --surface-3:#E8ECEF;
+  --line:#CFD7DE; --line-soft:#E1E7EB;
+  --ink:#10151B; --ink-2:#47535F; --ink-3:#74818D;
+  --accent:#0E4E7C; --accent-soft:#E2EDF6;
+  --tape:#B98400; --tape-soft:#FBF0D6;
+  --ok:#186F46; --warn:#8A5500; --crit:#A32320;
+  --ok-bg:#DFEFE7; --warn-bg:#F8EDD8; --crit-bg:#F9E4E3;
+  --shadow:0 1px 2px rgba(16,21,27,.06), 0 10px 26px -18px rgba(16,21,27,.3);
+  --f-d:'Archivo','Helvetica Neue',Arial,sans-serif;
+  --f-b:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;
+  --f-m:'IBM Plex Mono','SF Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D1115; --surface:#161B21; --surface-2:#1B2229; --surface-3:#222A32;
+    --line:#2B343D; --line-soft:#222A31;
+    --ink:#E5EAEE; --ink-2:#A4B1BD; --ink-3:#7D8A96;
+    --accent:#6DB2E3; --accent-soft:#15303F; --accent-soft:#152E3D;
+    --tape:#E0AE3E; --tape-soft:#2B2314;
+    --ok:#52C08A; --warn:#DFA544; --crit:#E6746E;
+    --ok-bg:#112A1E; --warn-bg:#2C2312; --crit-bg:#2D1817;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -18px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0D1115; --surface:#161B21; --surface-2:#1B2229; --surface-3:#222A32;
+  --line:#2B343D; --line-soft:#222A31;
+  --ink:#E5EAEE; --ink-2:#A4B1BD; --ink-3:#7D8A96;
+  --accent:#6DB2E3; --accent-soft:#152E3D;
+  --tape:#E0AE3E; --tape-soft:#2B2314;
+  --ok:#52C08A; --warn:#DFA544; --crit:#E6746E;
+  --ok-bg:#112A1E; --warn-bg:#2C2312; --crit-bg:#2D1817;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -18px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{background:var(--ground); color:var(--ink); font-family:var(--f-b);
+  font-size:17px; line-height:1.58; -webkit-font-smoothing:antialiased;
+  -webkit-text-size-adjust:100%;}
+.wrap{max-width:680px; margin:0 auto; padding:0 18px 100px}
+
+h1,h2,h3,h4{font-family:var(--f-d); margin:0; text-wrap:balance}
+h1{font-size:clamp(30px,8vw,42px); font-weight:700; letter-spacing:-.024em; line-height:1.04}
+h2{font-size:clamp(21px,5vw,26px); font-weight:700; letter-spacing:-.016em; line-height:1.18}
+h3{font-size:18px; font-weight:600; letter-spacing:-.008em; line-height:1.3}
+h4{font-size:15.5px; font-weight:600}
+p{margin:0}
+strong{font-weight:600; color:var(--ink)}
+.eyebrow{font-family:var(--f-m); font-size:11px; font-weight:600; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-3)}
+.lede{font-size:17.5px; color:var(--ink-2)}
+.sm{font-size:15px; color:var(--ink-2); line-height:1.55}
+.xs{font-size:13px; color:var(--ink-3); line-height:1.5}
+.stack{display:flex; flex-direction:column; gap:14px}
+.stack-s{display:flex; flex-direction:column; gap:8px}
+.stack-l{display:flex; flex-direction:column; gap:22px}
+
+/* header */
+header.top{background:var(--surface); border-bottom:1px solid var(--line); margin-bottom:34px}
+.tape{height:6px; background:repeating-linear-gradient(115deg,var(--tape) 0 18px,transparent 18px 34px)}
+.top-in{max-width:680px; margin:0 auto; padding:30px 18px 26px; display:flex; flex-direction:column; gap:12px}
+.now{display:inline-flex; align-items:center; gap:8px; font-family:var(--f-m); font-size:11.5px;
+  font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--crit)}
+.now::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--crit)}
+
+/* sections */
+section{margin-top:44px}
+.sec-head{display:flex; flex-direction:column; gap:9px; margin-bottom:20px;
+  padding-bottom:12px; border-bottom:2px solid var(--ink)}
+.clock{display:inline-block; font-family:var(--f-m); font-size:11.5px; font-weight:600;
+  letter-spacing:.09em; color:var(--surface); background:var(--ink);
+  padding:4px 9px; border-radius:3px; align-self:flex-start}
+
+.card{background:var(--surface); border:1px solid var(--line); border-radius:7px;
+  padding:18px; box-shadow:var(--shadow)}
+.note{border:1px solid var(--line); border-left:4px solid var(--tape); background:var(--surface);
+  border-radius:0 7px 7px 0; padding:16px 18px; display:flex; flex-direction:column; gap:7px}
+.note.red{border-left-color:var(--crit)}
+.note.acc{border-left-color:var(--accent)}
+
+/* action checklist */
+ul.acts{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px}
+ul.acts li{background:var(--surface); border:1px solid var(--line); border-radius:7px;
+  box-shadow:var(--shadow); overflow:hidden}
+ul.acts label{display:grid; grid-template-columns:26px 1fr; gap:14px; align-items:start;
+  padding:15px 16px; cursor:pointer; min-height:52px}
+ul.acts input{appearance:none; -webkit-appearance:none; margin:0; width:24px; height:24px;
+  border:2px solid var(--ink-3); border-radius:5px; background:var(--surface);
+  cursor:pointer; flex:none; margin-top:2px; position:relative; transition:background .12s,border-color .12s}
+ul.acts input:checked{background:var(--ok); border-color:var(--ok)}
+ul.acts input:checked::after{content:""; position:absolute; left:7px; top:2px; width:6px; height:12px;
+  border:solid #fff; border-width:0 2.5px 2.5px 0; transform:rotate(42deg)}
+ul.acts input:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+.act-txt{display:flex; flex-direction:column; gap:4px; font-size:15.5px; color:var(--ink-2)}
+.act-txt b{color:var(--ink); font-weight:600; font-size:16px}
+ul.acts input:checked ~ .act-txt{opacity:.5; text-decoration:line-through; text-decoration-thickness:1px}
+
+/* measurement blocks */
+.meas{background:var(--surface); border:1px solid var(--line); border-radius:7px;
+  box-shadow:var(--shadow); overflow:hidden}
+.meas-h{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+  padding:14px 17px; background:var(--surface-2); border-bottom:1px solid var(--line)}
+.meas-n{font-family:var(--f-m); font-size:13px; font-weight:600; color:var(--tape)}
+.dur{font-family:var(--f-m); font-size:11px; font-weight:500; letter-spacing:.06em;
+  color:var(--ink-3); background:var(--surface-3); border-radius:3px; padding:3px 7px; margin-left:auto}
+.meas-b{padding:16px 17px; display:flex; flex-direction:column; gap:11px; font-size:15.5px; color:var(--ink-2)}
+.meas-b b{color:var(--ink); font-weight:600}
+.verdict{font-size:14.5px; color:var(--ink-2); background:var(--surface-2);
+  border-radius:5px; padding:11px 13px; border:1px solid var(--line-soft)}
+.verdict b{color:var(--crit)}
+
+/* calculator */
+.calc{border-top:1px dashed var(--line); padding:15px 17px; background:var(--surface-2);
+  display:flex; flex-direction:column; gap:12px}
+.calc-lab{font-family:var(--f-m); font-size:10.5px; font-weight:600; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--ink-3)}
+.fields{display:flex; gap:9px; flex-wrap:wrap}
+.field{flex:1 1 88px; display:flex; flex-direction:column; gap:5px}
+.field span{font-size:12px; color:var(--ink-3); line-height:1.25}
+.field input{width:100%; font-family:var(--f-m); font-size:16px; font-variant-numeric:tabular-nums;
+  padding:10px 11px; border:1px solid var(--line); border-radius:5px;
+  background:var(--surface); color:var(--ink); text-align:center; min-height:44px}
+.field input:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent)}
+.out{font-family:var(--f-m); font-size:14.5px; font-variant-numeric:tabular-nums;
+  color:var(--ink-2); background:var(--surface); border:1px solid var(--line);
+  border-radius:5px; padding:11px 13px; line-height:1.65; min-height:44px}
+.out .big{font-size:20px; font-weight:600; color:var(--ink)}
+.out .g{color:var(--ok); font-weight:600}
+.out .y{color:var(--warn); font-weight:600}
+.out .r{color:var(--crit); font-weight:600}
+
+/* Q lists */
+ul.q{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0}
+ul.q li{padding:11px 0; border-bottom:1px solid var(--line-soft); font-size:15.5px; color:var(--ink-2);
+  display:grid; grid-template-columns:22px 1fr; gap:10px}
+ul.q li:last-child{border-bottom:none}
+ul.q li::before{content:"?"; font-family:var(--f-m); font-weight:600; color:var(--tape); font-size:15px}
+ul.plain{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:8px;
+  font-size:15.5px; color:var(--ink-2)}
+ul.plain li::marker{color:var(--tape)}
+
+/* data request */
+.req{background:var(--surface); border:1px solid var(--line); border-radius:7px;
+  box-shadow:var(--shadow); overflow:hidden}
+.req-h{display:flex; align-items:center; gap:12px; padding:14px 17px;
+  background:var(--surface-2); border-bottom:1px solid var(--line); flex-wrap:wrap}
+#reqtext{margin:0; padding:17px; font-family:var(--f-m); font-size:12.5px; line-height:1.75;
+  color:var(--ink-2); white-space:pre-wrap; overflow-x:auto}
+button.copy{font-family:var(--f-b); font-size:13.5px; font-weight:600; color:var(--surface);
+  background:var(--accent); border:none; border-radius:5px; padding:9px 15px;
+  cursor:pointer; margin-left:auto; min-height:40px}
+button.copy:hover{filter:brightness(1.12)}
+button.copy:focus-visible{outline:3px solid var(--tape); outline-offset:2px}
+
+/* dont-do */
+.dont{display:flex; flex-direction:column; gap:2px}
+.dont div{display:grid; grid-template-columns:26px 1fr; gap:11px; padding:13px 15px;
+  background:var(--crit-bg); border:1px solid var(--line); border-radius:6px;
+  font-size:15.5px; color:var(--ink-2)}
+.dont div::before{content:"✕"; font-family:var(--f-m); font-weight:600; color:var(--crit); font-size:15px}
+.dont b{color:var(--ink); font-weight:600}
+
+footer.end{margin-top:52px; padding-top:20px; border-top:1px solid var(--line)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+</style>
+
+<header class="top">
+  <div class="tape"></div>
+  <div class="top-in">
+    <span class="now">Hoy · CEDI Madrid</span>
+    <h1>Día 1 en piso</h1>
+    <p class="lede">Hoy no diagnosticas: <strong>capturas evidencia que después nadie pueda discutir.</strong> Mediciones con cronómetro y libreta, y la solicitud de datos entregada por escrito antes de salir.</p>
+    <p class="xs">Las casillas se guardan en este dispositivo mientras recorres.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- ANTES -->
+<section style="margin-top:0">
+  <div class="sec-head">
+    <span class="clock">ANTES DE BAJARTE</span>
+    <h2>Cuatro decisiones en el carro</h2>
+  </div>
+  <ul class="acts">
+    <li><label><input type="checkbox" data-k="a1"><span class="act-txt"><b>Nada de sala de juntas</b>Reunión de apertura de 10 minutos, de pie. Si te sientas dos horas a ver presentaciones, para cuando salgas el CEDI ya se organizó y perdiste el día.</span></label></li>
+    <li><label><input type="checkbox" data-k="a2"><span class="act-txt"><b>Pregunta la hora del corte</b>¿A qué hora es el corte de pedidos y a qué hora sale el último camión? Ese es el eje del día: lo importante pasa en las tres horas antes del corte.</span></label></li>
+    <li><label><input type="checkbox" data-k="a3"><span class="act-txt"><b>Di para qué viniste, en el primer minuto</b>“Vengo a medir el proceso, no a las personas.” Dilo y repítelo. Si la gente cree que vienes a sancionar, los datos se dañan hoy mismo y ya no los recuperas.</span></label></li>
+    <li><label><input type="checkbox" data-k="a4"><span class="act-txt"><b>Equipo mínimo</b>Botas y chaleco (llegar sin EPP te cuesta 40 minutos y credibilidad), celular con cámara y cronómetro, libreta, cinta de enmascarar y marcador grueso.</span></label></li>
+  </ul>
+</section>
+
+<!-- 30 MIN -->
+<section>
+  <div class="sec-head">
+    <span class="clock">PRIMEROS 30 MINUTOS</span>
+    <h2>Arranca los relojes</h2>
+    <p class="sm">Estas cuatro cosas necesitan tiempo corriendo, así que van de primeras — antes de recorrer nada.</p>
+  </div>
+  <ul class="acts">
+    <li><label><input type="checkbox" data-k="b1"><span class="act-txt"><b>Etiqueta de fecha en todo el producto que esté en piso</b>Cinta y marcador con fecha y hora, en cada pallet fuera de posición: recepción, staging, devoluciones, pasillos, averías. Foto del conjunto. Lo que siga ahí en 48 horas es tu backlog real, contable y fotografiable.</span></label></li>
+    <li><label><input type="checkbox" data-k="b2"><span class="act-txt"><b>Planilla en portería</b>Que anoten desde ya, por vehículo: placa, hora de llegada, hora de entrada a muelle, hora de salida. Y pide los últimos 30 días si ya lo llevan.</span></label></li>
+    <li><label><input type="checkbox" data-k="b3"><span class="act-txt"><b>Encarga el conteo ciego</b>100 ubicaciones aleatorias que <b>eliges tú</b> del listado, no ellos. A ciegas: el que cuenta no ve la cantidad del sistema. Que arranque ya para tener resultado antes de irte.</span></label></li>
+    <li><label><input type="checkbox" data-k="b4"><span class="act-txt"><b>Seis fotos con hora</b>Muelle de despacho, staging, pasillo principal, zona de picking, recepción, devoluciones. Repite las mismas seis a media mañana, en el pico y al cierre. Te llevas la película del día, no una postal.</span></label></li>
+  </ul>
+  <div class="note acc" style="margin-top:16px">
+    <h4>El recorrido va a contracorriente</h4>
+    <p class="sm">Empiezas en la puerta por donde sale el camión y caminas hacia atrás hasta recepción. Ves el flujo en el orden en que el cliente lo sufre, y cada atasco te lleva solo a su causa aguas arriba. Recórrelo dos veces: una en hora valle y otra en el pico. Son dos CEDI distintos.</p>
+  </div>
+</section>
+
+<!-- MEDICIONES -->
+<section>
+  <div class="sec-head">
+    <span class="clock">DURANTE EL DÍA</span>
+    <h2>Siete mediciones sin tocar el sistema</h2>
+    <p class="sm">Todas se hacen con cronómetro, libreta y cámara. Ninguna depende de que el WMS te entregue algo hoy.</p>
+  </div>
+
+  <div class="stack-l">
+
+    <!-- 1 -->
+    <div class="meas">
+      <div class="meas-h"><span class="meas-n">01</span><h3>Ocupación real</h3><span class="dur">30 MIN</span></div>
+      <div class="meas-b">
+        <p>Elige <b>5 pasillos al azar</b> — al azar de verdad, no los que te muestren. En cada uno cuenta tres cosas: posiciones ocupadas, vacías, y <b>ocupadas parcialmente</b> (una caja o medio pallet bloqueando una posición entera).</p>
+        <p class="verdict">La parcial es la trampa: para el sistema esa posición está ocupada, pero no está almacenando nada. Es <b>capacidad fantasma</b>, y suele ser el 10–20% del CEDI.</p>
+      </div>
+      <div class="calc">
+        <span class="calc-lab">Calcula aquí</span>
+        <div class="fields">
+          <label class="field"><span>Ocupadas</span><input type="number" min="0" id="oc1" inputmode="numeric"></label>
+          <label class="field"><span>Parciales</span><input type="number" min="0" id="oc2" inputmode="numeric"></label>
+          <label class="field"><span>Vacías</span><input type="number" min="0" id="oc3" inputmode="numeric"></label>
+        </div>
+        <div class="out" id="ocOut">Ingresa el conteo de tus pasillos.</div>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="meas">
+      <div class="meas-h"><span class="meas-n">02</span><h3>Ciclo de alistamiento</h3><span class="dur">2 H</span></div>
+      <div class="meas-b">
+        <p>Sigue a <b>4 operarios distintos</b>, un ciclo completo cada uno. Cronómetro con dos tiempos separados: <b>caminando</b> y <b>tomando producto</b> (incluye chequear y rotular).</p>
+        <p>Anota aparte cada vez que: no encuentra el producto, la posición está vacía, tiene que devolver algo, o le pregunta a alguien. Y fíjate en una sola cosa más — <b>si lee el scanner en cada línea o se lo salta.</b></p>
+        <p class="verdict">Si caminar pasa del <b>50%</b> del ciclo, el problema es el slotting, no la gente. Correr más rápido no arregla una ruta mal diseñada.</p>
+      </div>
+      <div class="calc">
+        <span class="calc-lab">Calcula aquí</span>
+        <div class="fields">
+          <label class="field"><span>Segundos caminando</span><input type="number" min="0" id="cm1" inputmode="numeric"></label>
+          <label class="field"><span>Segundos tomando</span><input type="number" min="0" id="cm2" inputmode="numeric"></label>
+        </div>
+        <div class="out" id="cmOut">Ingresa los dos tiempos de un ciclo.</div>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="meas">
+      <div class="meas-h"><span class="meas-n">03</span><h3>Agotados internos de picking</h3><span class="dur">TODO EL TURNO</span></div>
+      <div class="meas-b">
+        <p>Pídele a un supervisor que anote, con hora y SKU, <b>cada vez que una posición de picking queda vacía con pedido pendiente</b>.</p>
+        <p class="verdict">Es la causa oculta número uno de baja productividad y casi ningún CEDI la mide. Si el reabastecimiento va corriendo detrás del picking en vez de ir adelante, la vas a ver en la planilla.</p>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="meas">
+      <div class="meas-h"><span class="meas-n">04</span><h3>Exactitud de inventario (ERI)</h3><span class="dur">RESULTADO AL CIERRE</span></div>
+      <div class="meas-b">
+        <p>Del conteo ciego que encargaste temprano. Es <b>binaria por ubicación</b>: o la cantidad está exacta o no está. No promedies pesos — la exactitud en dinero siempre se ve bien porque faltantes y sobrantes se compensan.</p>
+        <p class="verdict">Debajo de <b>95%</b> el operario está trabajando con información falsa, y todo lo que hagas sobre el método de alistamiento va a rendir poco. Este número decide el orden de todo el plan.</p>
+      </div>
+      <div class="calc">
+        <span class="calc-lab">Calcula aquí</span>
+        <div class="fields">
+          <label class="field"><span>Ubicaciones contadas</span><input type="number" min="0" id="er1" inputmode="numeric"></label>
+          <label class="field"><span>Exactas</span><input type="number" min="0" id="er2" inputmode="numeric"></label>
+        </div>
+        <div class="out" id="erOut">Ingresa el resultado del conteo ciego.</div>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="meas">
+      <div class="meas-h"><span class="meas-n">05</span><h3>Muestreo de trabajo</h3><span class="dur">EN PARALELO</span></div>
+      <div class="meas-b">
+        <p>Cada 20 minutos párate en un punto alto y anota qué está haciendo <b>cada persona que veas en ese instante</b>: alistando, caminando, buscando, esperando, reprocesando, conversando. Sin juzgar, solo el instante.</p>
+        <p>Diez o doce rondas te dan 150–250 observaciones, que es una muestra estadísticamente válida.</p>
+        <p class="verdict">En CEDI sin estándares es normal encontrar <b>30–45% en desplazamiento y 10–20% buscando</b>. Es el dato que convierte “la gente no rinde” en “el diseño no deja rendir”.</p>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="meas">
+      <div class="meas-h"><span class="meas-n">06</span><h3>El pico antes del corte</h3><span class="dur">ÚLTIMAS 3 H</span></div>
+      <div class="meas-b">
+        <p>Quédate en despacho hasta que salga el último camión. Cuenta pedidos alistados por hora en el valle y en el pico, y anota la hora de cada error que aparezca en chequeo.</p>
+        <p class="verdict">Si los errores se concentran en la última hora, <b>no es un problema de personas: es diseño de carga.</b> Se arregla escalonando los cortes por ruta, no exigiéndole más al turno.</p>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="meas">
+      <div class="meas-h"><span class="meas-n">07</span><h3>Las zonas muertas</h3><span class="dur">20 MIN</span></div>
+      <div class="meas-b">
+        <p>Devoluciones, averías y cuarentena. Busca <b>el producto más viejo que haya</b> y anota su fecha. Mide los metros cuadrados que ocupan.</p>
+        <p>Luego dos preguntas: quién tiene autoridad para dar la disposición final, y cuándo fue la última vez que la ejerció.</p>
+        <p class="verdict">Zona sin dueño y sin fecha límite: ahí es donde se acumula el espacio del CEDI, en silencio y sin que nadie lo reporte.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- PREGUNTAS -->
+<section>
+  <div class="sec-head">
+    <span class="clock">MIENTRAS RECORRES</span>
+    <h2>Qué preguntar y a quién</h2>
+  </div>
+
+  <div class="stack">
+    <div class="card stack-s">
+      <span class="eyebrow" style="color:var(--tape)">Al operario · sin el supervisor delante</span>
+      <ul class="q">
+        <li>¿Qué es lo que más tiempo le hace perder en el día?</li>
+        <li>¿Cuántas veces al día no encuentra el producto donde dice el sistema?</li>
+        <li>Cuando se equivoca, ¿por qué cree que pasó?</li>
+        <li>¿Cuántas líneas se supone que debe hacer por hora?</li>
+        <li>¿Qué hay ahí que no debería estar?</li>
+      </ul>
+      <p class="xs">Si a la cuarta no saben responder, no hay estándar de trabajo. Sin estándar no hay productividad que gestionar, solo esfuerzo individual.</p>
+    </div>
+
+    <div class="card stack-s">
+      <span class="eyebrow" style="color:var(--tape)">Al jefe del CEDI</span>
+      <ul class="q">
+        <li>¿Cuál es tu cuello de botella hoy?</li>
+        <li>¿Cuántas posiciones tienes y cuántas están ocupadas en este momento?</li>
+        <li>¿Qué pasa cuando un pedido no alcanza a salir?</li>
+        <li>¿Cuándo fue el último re-slotting?</li>
+        <li>¿Cuánto se demora un camión desde que llega hasta que el producto queda disponible?</li>
+      </ul>
+      <p class="xs">Si responde el cuello de botella rápido y con un número, hay gestión. Si responde “todo”, no la hay — y eso ya es un hallazgo.</p>
+    </div>
+
+    <div class="note red">
+      <h4>No preguntes “¿por qué está tan lleno?”</h4>
+      <p class="sm">Te van a dar la respuesta ensayada: “es que llegó mucho”. Pregunta en su lugar: <strong>“muéstrame el pallet más viejo que hay en piso”</strong> y <strong>“muéstrame diez posiciones que no se hayan movido este mes”</strong>. Caminando hacia allá vas a ver más de lo que cualquier respuesta te iba a dar.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DATOS -->
+<section>
+  <div class="sec-head">
+    <span class="clock">ANTES DE SALIR</span>
+    <h2>La solicitud de datos</h2>
+    <p class="sm">Entrégala <strong>hoy, por escrito, con responsable y fecha de entrega</strong>. Si te vas sin dejarla, pierdes una semana entera esperando.</p>
+  </div>
+
+  <div class="req">
+    <div class="req-h">
+      <span class="eyebrow">Para enviar por correo hoy mismo</span>
+      <button class="copy" id="copyBtn" type="button">Copiar</button>
+    </div>
+<pre id="reqtext">SOLICITUD DE INFORMACIÓN — CEDI MADRID
+Período: últimas 13 semanas (o 6 meses si está disponible)
+Formato: Excel o CSV plano, un registro por fila.
+SIN tablas dinámicas, SIN consolidados, SIN resúmenes.
+
+DEL WMS / ERP
+ 1. Movimientos de salida a nivel de línea: fecha, hora, SKU,
+    cantidad, ubicación, operario, pedido, cliente y ruta.
+ 2. Movimientos de entrada con hora de llegada del vehículo
+    Y hora de ubicación del producto (para dock-to-stock).
+ 3. Snapshot de inventario por ubicación, al cierre de hoy.
+ 4. Maestro de ubicaciones: posiciones por zona y tipo.
+ 5. Maestro de SKU: dimensiones, peso, empaque, paletización.
+ 6. Trazabilidad de pedidos: creación, corte, liberación,
+    fin de alistamiento y despacho.
+ 7. Devoluciones y notas crédito con su causal.
+ 8. Resultados de los últimos conteos cíclicos.
+
+DE GESTIÓN HUMANA
+ 9. Headcount por turno y por función.
+10. Horas ordinarias y horas extra por período.
+11. Ausentismo, rotación y antigüedad promedio.
+
+DE TRANSPORTE
+12. Vehículos programados vs. ejecutados.
+13. Hora de llegada y de salida por vehículo.
+14. Ocupación del vehículo despachado.
+
+DEL SITIO
+15. Layout a escala con zonas, muelles y pasillos.
+16. Costo total del CEDI del último trimestre.
+
+Responsable: ____________  Fecha de entrega: ____________</pre>
+  </div>
+
+  <div class="note" style="margin-top:16px">
+    <h4>Si te mandan un reporte ya cocinado, no sirve</h4>
+    <p class="sm">Necesitas el detalle línea por línea. Un consolidado te da los promedios, y los promedios son precisamente donde se esconden el pico de las últimas tres horas, el operario nuevo y los diez SKU que generan la mitad de los errores.</p>
+  </div>
+</section>
+
+<!-- NO HACER -->
+<section>
+  <div class="sec-head">
+    <span class="clock">TODO EL DÍA</span>
+    <h2>Lo que hoy no haces</h2>
+  </div>
+  <div class="dont">
+    <div><span><b>No corriges nada.</b> Si empiezas a dar órdenes, se acabó la observación: de ahí en adelante vas a ver el proceso que armaron para ti, no el que opera mañana cuando no estés.</span></div>
+    <div><span><b>No prometes nada.</b> Ni recursos, ni cambios, ni que “esto se arregla”. Todavía no sabes cuál es la causa.</span></div>
+    <div><span><b>No sacas conclusiones delante del equipo.</b> Lo que ves hoy es un día. Un lunes y un viernes son operaciones distintas.</span></div>
+    <div><span><b>No aceptas el indicador, pides el dato crudo.</b> El reporte que te muestren ya pasó por el criterio de alguien.</span></div>
+  </div>
+</section>
+
+<!-- CIERRE -->
+<section>
+  <div class="sec-head">
+    <span class="clock">ÚLTIMOS 20 MINUTOS</span>
+    <h2>Cierre del día</h2>
+    <p class="sm">De pie, con el jefe del CEDI. Cuatro cosas y te vas.</p>
+  </div>
+  <ul class="acts">
+    <li><label><input type="checkbox" data-k="c1"><span class="act-txt"><b>Devuelve tres hechos, no opiniones</b>“Conté cinco pasillos, ocupación 93%.” “El operario que seguí caminó el 58% de su ciclo.” “Hay 40 pallets en piso, les puse fecha hoy.” Hechos con número — no se discuten y no ofenden.</span></label></li>
+    <li><label><input type="checkbox" data-k="c2"><span class="act-txt"><b>Deja la solicitud de datos firmada</b>Con responsable y fecha. Sale por correo antes de que arranques el carro.</span></label></li>
+    <li><label><input type="checkbox" data-k="c3"><span class="act-txt"><b>Acuerda una sola cosa que empieza mañana</b>Una, no diez. Normalmente: llevar el registro de agotados de picking. Cuesta cero y en una semana te da la mitad de la respuesta.</span></label></li>
+    <li><label><input type="checkbox" data-k="c4"><span class="act-txt"><b>Fija la segunda visita — otro día de la semana</b>Si hoy fue lunes, vuelve un jueves o un viernes. El perfil de carga cambia y con él cambia dónde está el cuello de botella.</span></label></li>
+  </ul>
+
+  <div class="note acc" style="margin-top:18px">
+    <h4>Con qué te vas si el día salió bien</h4>
+    <p class="sm">Un porcentaje de ocupación medido por ti, un porcentaje de desplazamiento cronometrado, un ERI de conteo ciego, un conteo de pallets en piso con fecha puesta, un muestreo de trabajo, y la solicitud de datos entregada. <strong>Seis evidencias propias.</strong> Con eso ya no dependes de que nadie te cuente qué está pasando en Madrid.</p>
+  </div>
+</section>
+
+<footer class="end">
+  <p class="xs">Guía de campo para la primera visita de evaluación operativa. Los valores de corte (50% de desplazamiento, 95% de ERI, 85–90% de ocupación) son referencias de industria para CEDI de consumo masivo con WMS y radiofrecuencia: sirven para leer lo que midas hoy, no como meta oficial hasta calibrarlos contra el histórico de Madrid.</p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var boxes = document.querySelectorAll('ul.acts input[type=checkbox]');
+  var KEY = 'cedi-dia1-v1';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e){ state = {}; }
+  boxes.forEach(function(b){
+    var k = b.getAttribute('data-k');
+    if (state[k]) b.checked = true;
+    b.addEventListener('change', function(){
+      state[k] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){}
+    });
+  });
+
+  function n(id){ var v = parseFloat(document.getElementById(id).value); return isFinite(v) && v >= 0 ? v : null; }
+  function on(ids, fn){ ids.forEach(function(i){ document.getElementById(i).addEventListener('input', fn); }); }
+
+  function occ(){
+    var a = n('oc1'), p = n('oc2'), v = n('oc3'), o = document.getElementById('ocOut');
+    if (a === null || p === null || v === null){ o.innerHTML = 'Ingresa el conteo de tus pasillos.'; return; }
+    var tot = a + p + v;
+    if (!tot){ o.innerHTML = 'Ingresa el conteo de tus pasillos.'; return; }
+    var pct = (a + p) / tot * 100, ph = p / tot * 100;
+    var cls = pct > 90 ? 'r' : (pct > 85 ? 'y' : 'g');
+    var msg = pct > 90 ? 'Zona de congestión. La productividad que midas hoy está contaminada.'
+            : pct > 85 ? 'En el límite. Cada punto adicional ya cuesta caro.'
+            : 'Ocupación sana. Si igual se siente lleno, el problema es de flujo, no de espacio.';
+    o.innerHTML = '<span class="big ' + cls + '">' + pct.toFixed(1) + '%</span> de ocupación sobre ' + tot +
+      ' posiciones<br>Capacidad fantasma (parciales): <span class="' + (ph > 15 ? 'r' : 'g') + '">' + ph.toFixed(1) + '%</span>' +
+      '<br><span style="color:var(--ink-3)">' + msg + '</span>';
+  }
+
+  function cyc(){
+    var w = n('cm1'), t = n('cm2'), o = document.getElementById('cmOut');
+    if (w === null || t === null){ o.innerHTML = 'Ingresa los dos tiempos de un ciclo.'; return; }
+    var tot = w + t;
+    if (!tot){ o.innerHTML = 'Ingresa los dos tiempos de un ciclo.'; return; }
+    var pct = w / tot * 100;
+    var cls = pct > 50 ? 'r' : (pct > 40 ? 'y' : 'g');
+    var msg = pct > 50 ? 'El problema es el slotting. Reubicar los SKU de mayor rotación pesa más que cualquier meta de velocidad.'
+            : pct > 40 ? 'Alto pero manejable. Vale un re-slotting de los SKU top.'
+            : 'Desplazamiento razonable. Busca la pérdida en otro lado: búsqueda, espera o reproceso.';
+    o.innerHTML = '<span class="big ' + cls + '">' + pct.toFixed(0) + '%</span> del ciclo caminando · ciclo total ' +
+      Math.round(tot) + ' s<br><span style="color:var(--ink-3)">' + msg + '</span>';
+  }
+
+  function eri(){
+    var c = n('er1'), ok = n('er2'), o = document.getElementById('erOut');
+    if (c === null || ok === null || !c){ o.innerHTML = 'Ingresa el resultado del conteo ciego.'; return; }
+    if (ok > c){ o.innerHTML = '<span class="r">Las exactas no pueden superar las contadas.</span>'; return; }
+    var pct = ok / c * 100;
+    var cls = pct < 95 ? 'r' : (pct < 97 ? 'y' : 'g');
+    var msg = pct < 95 ? 'Prioridad uno. Arregla exactitud de inventario antes de tocar slotting, método o chequeo.'
+            : pct < 97 ? 'Aceptable pero no confiable. Sube la frecuencia de conteos cíclicos en las zonas A.'
+            : 'Buen ERI. Los errores de despacho tienen otra causa; búscala en el Pareto por SKU y por hora.';
+    o.innerHTML = '<span class="big ' + cls + '">' + pct.toFixed(1) + '%</span> de exactitud por ubicación (' +
+      ok + '/' + c + ')<br><span style="color:var(--ink-3)">' + msg + '</span>';
+  }
+
+  on(['oc1','oc2','oc3'], occ);
+  on(['cm1','cm2'], cyc);
+  on(['er1','er2'], eri);
+
+  var btn = document.getElementById('copyBtn');
+  btn.addEventListener('click', function(){
+    var txt = document.getElementById('reqtext').innerText;
+    function done(ok){ btn.textContent = ok ? 'Copiado' : 'Selecciona y copia'; setTimeout(function(){ btn.textContent = 'Copiar'; }, 2200); }
+    try {
+      navigator.clipboard.writeText(txt).then(function(){ done(true); }, function(){ done(false); });
+    } catch(e){ done(false); }
+  });
+})();
+</script>
