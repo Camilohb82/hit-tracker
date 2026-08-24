@@ -1096,15 +1096,17 @@ r = nota(mc, sl + 2, N,
     "falta de sincronización vista desde el otro lado.", W)
 mc.freeze_panes = "A{}".format(ej); mc.print_title_rows = "{0}:{0}".format(hdr)
 # ================================================================= 9 PREGUNTAS
-W = [16, 44, 34, 42, 34, 34]; N = 6
+W = [16, 42, 30, 56, 13, 16, 11, 32, 34]; N = 9
 setup(pg, W, "1B7A4C")
 r = titulo(pg, 1, N, "9 · PREGUNTAS PARA HACER EN PISO",
-           "Formuladas tal como se dicen. Cada una trae qué buscar en la respuesta y qué hacer si aparece la señal de alarma.")
+           "Lo respondido en el recorrido queda escrito. Lo que falta está marcado como Pendiente: filtra por esa columna y esa es tu agenda de la reunión.")
 r = banda(pg, r, N, "REGLA GENERAL", NAVY)
 r = linea(pg, r, N, W, "▪", "A los operarios se les pregunta sin el supervisor delante. Si el supervisor está presente, la respuesta es la que él querría oír.")
 r = linea(pg, r, N, W, "▪", "Pregunta y cállate. El silencio incómodo después de la respuesta es donde aparece la información que no te iban a dar.")
 r = linea(pg, r, N, W, "▪", "Nunca preguntes «¿quién se equivocó?». Cierra la información para el resto del día y para la próxima visita.")
-r = linea(pg, r, N, W, "▪", "La operación trabaja con dos WMS, uno para el CD centralizado y otro para el descentralizado. Las preguntas marcadas «Dos WMS» tienen ese marco: pregúntalas siempre precisando de cuál de los dos estás hablando.")
+r = linea(pg, r, N, W, "▪", "La operación trabaja con dos sistemas, EWM y WMS. Las preguntas marcadas «Dos WMS» tienen ese marco: pregúntalas siempre precisando de cuál de los dos estás hablando.")
+r = linea(pg, r, N, W, "▪", "Una respuesta de la jefatura no reemplaza la del operario. Las preguntas del grupo «Operario» siguen pendientes aunque el jefe ya haya opinado sobre lo mismo.")
+
 r = banda(pg, r, N, "PREGUNTAS QUE NO FUNCIONAN Y CON QUÉ REEMPLAZARLAS", RED_T)
 malas = [
     ("«¿Por qué está tan lleno?»", "«Muéstreme el pallet más viejo que hay en piso.»"),
@@ -1114,20 +1116,37 @@ malas = [
     ("«¿Quién se equivocó?»", "«¿Qué tendría que cambiar para que ese error fuera imposible?»"),
     ("«¿Se despacha a tiempo?»", "«Muéstreme un pedido que se alistó temprano y salió tarde. ¿Qué pasó?»"),
 ]
-for i, lab in enumerate(["En vez de preguntar esto…", "…pregunta esto"], start=1):
-    cc = pg.cell(row=r, column=i, value=lab)
-    cc.font = f(9, True, WHITE); cc.fill = PatternFill("solid", fgColor=NAVY); cc.alignment = CTRW; cc.border = BOX
+for cols, lab in (((1, 2), "En vez de preguntar esto…"), ((3, 5), "…pregunta esto")):
+    pg.merge_cells(start_row=r, start_column=cols[0], end_row=r, end_column=cols[1])
+    cc = pg.cell(row=r, column=cols[0], value=lab)
+    cc.font = f(9, True, WHITE); cc.fill = PatternFill("solid", fgColor=NAVY); cc.alignment = CTRW
+    for c_ in range(cols[0], cols[1] + 1): pg.cell(row=r, column=c_).border = BOX
 pg.row_dimensions[r].height = 22
 r += 1
 for mala, buena in malas:
-    a = pg.cell(row=r, column=1, value=mala); a.font = f(10, color=RED_T); a.border = BOX; a.alignment = WRAP
-    b = pg.cell(row=r, column=2, value=buena); b.font = f(10, True, GRN_T); b.border = BOX; b.alignment = WRAP
-    pg.row_dimensions[r].height = 22
+    pg.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2)
+    a = pg.cell(row=r, column=1, value=mala); a.font = f(10, color=RED_T); a.alignment = WRAPC
+    pg.merge_cells(start_row=r, start_column=3, end_row=r, end_column=5)
+    b = pg.cell(row=r, column=3, value=buena); b.font = f(10, True, GRN_T); b.alignment = WRAPC
+    for c_ in range(1, 6): pg.cell(row=r, column=c_).border = BOX
+    pg.row_dimensions[r].height = 24
     r += 1
-r = banda(pg, r + 1, N, "BANCO DE PREGUNTAS", NAVY)
+
+# ---------------- contador ----------------
+r = banda(pg, r + 1, N, "AVANCE DEL CUESTIONARIO", TAPE)
+cont = r
+for i, lab in enumerate(["Total preguntas", "Respondidas", "Parciales", "Pendientes", "% pendiente"], start=1):
+    cc = pg.cell(row=cont, column=i, value=lab)
+    cc.font = f(9, True, WHITE); cc.fill = PatternFill("solid", fgColor=NAVY); cc.alignment = CTRW; cc.border = BOX
+pg.row_dimensions[cont].height = 22
+val = cont + 1
+pg.row_dimensions[val].height = 26
+
+r = banda(pg, val + 2, N, "BANCO DE PREGUNTAS", NAVY)
 hdr = r
-tabla(pg, hdr, ["A quién", "Pregunta (dila así)", "Por qué esta pregunta", "Respuesta",
-                "Señal de alarma en la respuesta", "Qué hacer si aparece la señal"])
+tabla(pg, hdr, ["A quién", "Pregunta (dila así)", "Por qué esta pregunta", "Respuesta", "Estado",
+                "Fuente", "Prioridad", "Señal de alarma en la respuesta", "Qué hacer si aparece la señal"],
+      alturas=34)
 preguntas = [
     ("Reabastecimiento", "¿El reabastecimiento se hace en ola antes del turno o a demanda?",
      "Define si va adelante o detrás del alistamiento.",
@@ -1228,7 +1247,7 @@ preguntas = [
     ("Dos WMS", "¿Un mismo pedido puede pasar por los dos sistemas? ¿Cómo se consolida?",
      "Los pedidos que cruzan los dos sistemas suelen ser los que más tiempo pierden.",
      "Sí, y la consolidación es manual.",
-     "Márcalos como «Ambos» en la hoja 6 y compara su ciclo contra el resto. Ahí queda cuantificado el costo de operar con dos sistemas."),
+     "Márcalos como «Ambos» en la hoja 6 y compara su ciclo contra el resto."),
     ("Operario", "¿Qué es lo que más tiempo le hace perder en el día?",
      "Nombra el desperdicio real antes que cualquier indicador.",
      "Menciona esperar producto o caminar.",
@@ -1266,22 +1285,242 @@ preguntas = [
      "Rotación por encima del 30% anual.",
      "Con rotación alta siempre hay novatos. Reforzar certificación antes de operar solo."),
 ]
-r = hdr + 1
+
+# (clave = subcadena distintiva de la pregunta) -> (respuesta, estado, fuente, prioridad)
+RECORRIDO = "Recorrido 24/08"
+RESPUESTAS = {
+ "personas reabastecen": (
+   "En la zona de paqueteo trabajan 15 personas. FALTA el desglose entre alistamiento, rotulado y auditoría, "
+   "y el dato de las demás zonas.", "Parcial", RECORRIDO, "Alta"),
+ "regla escrita de priorización": (
+   "Hay una secuencia declarada de olas: primero nacional, después urbano y por último paqueteo. Las olas se envían "
+   "según la programación y la capacidad disponible de alistamiento y despacho. La programación llega por correo con "
+   "el rango de DT; Daniel toma el Excel, lo depura y monitorea si se despachó o no. FALTA: si la regla está escrita "
+   "y publicada, o es criterio de Daniel.", "Parcial", RECORRIDO, "Alta"),
+ "hora de cita de cada vehículo": (
+   "Paqueteo tiene corte hasta las 8:30–9:00 a.m. máximo. FALTA confirmar si alistamiento conoce la hora de cita de "
+   "cada vehículo, o solo trabaja contra ese corte.", "Parcial", RECORRIDO, "Alta"),
+ "conjunto o lo hacen separado": (
+   "Separado y por canal. Paqueteo se alista por DT en las bandas y se agrupa por ola de trabajo; en los directos va "
+   "un DT por ola de trabajo. Hay separación física de porcelana y grifería. Paso directo es caja completa. "
+   "Marketplace agrupa Mercado Libre, Linio y Zona de Sueños, más grifería y porcelana. Directo son clientes grandes: "
+   "un despacho por cliente.", "Respondida", RECORRIDO, "Media"),
+ "no cuadra el SKU": (
+   "Cuando hay producto mezclado entre EWM y WMS se generan novedades de inventario: se asigna una persona para hacer "
+   "el traslado y la entrega baja a cero. Ocurre principalmente con Sodimac y Dina. También hay ajustes de inventario "
+   "asociados a EAN 13 y EAN 14 cuando una misma caja sirve a varios clientes (ver nota a verificar al final de la "
+   "hoja). FALTA: a quién se le informa formalmente y en cuánto tiempo se resuelve.", "Parcial", RECORRIDO, "Alta"),
+ "separando y ubicando la mercancía": (
+   "Daniel asigna la puerta a cada ola o DT, y la puerta se asigna de acuerdo con la zona de destino. FALTA: si hay "
+   "marcación en piso y capacidad máxima definida por posición de staging.", "Parcial", RECORRIDO, "Media"),
+ "controles tienen en la puerta": (
+   "En paqueteo hay auditoría de cajas en las bandas antes de agrupar por ola de trabajo. El propio CEDI reconoce que "
+   "«toca mejorar el proceso en la puerta». FALTA: qué se verifica exactamente antes del cargue y si lo hace alguien "
+   "distinto de quien alistó.", "Parcial", RECORRIDO, "Alta"),
+ "transporte masivo o semimasivo": (
+   "Paqueteo se gestiona todo en EWM, se cobra por peso-volumen y tiene corte hasta las 8:30–9:00 a.m. El rotulado y "
+   "las guías los genera hoy el CEDI —antes los generaba la transportadora y se perdía mercancía— y se rotulan todas "
+   "las cajas: ese es el cuello de botella declarado. Paso directo es caja completa. Directo son clientes grandes con "
+   "un despacho por cliente. Una van de contenedor lleva mínimo 300 a 400 cajas.", "Respondida", RECORRIDO, "Media"),
+ "entregas centralizadas": (
+   "La programación llega por correo con el rango de DT y Daniel la administra en Excel: la depura y monitorea si se "
+   "despachó o no. FALTA: confirmar la redacción original de la pregunta, que quedó cortada en la captura, y quién "
+   "responde formalmente por el flujo centralizado.", "Parcial", RECORRIDO, "Media"),
+ "avisa a despacho": (
+   "El monitoreo lo hace Daniel sobre el Excel de programación: revisa si se despachó o no. FALTA: si existe una señal "
+   "formal de «listo para cargar» entre alistamiento y despacho, o despacho se entera al pasar.", "Parcial", RECORRIDO, "Alta"),
+ "secuencia de cargue": (
+   "Para Sodimac la carga se organiza por tienda. Sodimac se queja de forma recurrente de que el carro va desorganizado "
+   "porque no está armado el combo; según Eli, organizarlo se paga aparte. El cargue puede durar todo el día. FALTA: "
+   "si existe secuencia por orden inverso de entrega para el resto de rutas.", "Parcial", RECORRIDO, "Alta"),
+ "alcance tiene cada WMS": (
+   "Paqueteo se gestiona todo en EWM. Hay producto que queda mezclado entre EWM y WMS. FALTA: cuál de los dos "
+   "corresponde al CD centralizado y cuál al descentralizado, y el alcance completo de cada uno por proceso.",
+   "Parcial", RECORRIDO, "Alta"),
+ "programación de olas en el CD": (
+   "Las olas se envían según la programación y la capacidad de alistamiento y despacho, en orden: nacional, urbano y "
+   "paqueteo. La programación llega por correo con el rango de DT y se administra en un Excel. FALTA: la parte de la "
+   "conexión entre sistemas — la pregunta original quedó cortada.", "Parcial", RECORRIDO, "Alta"),
+ "cuál manda": (
+   "Cuando hay producto mezclado se genera novedad de inventario, se asigna una persona para el traslado y la entrega "
+   "baja a cero. Es el mecanismo de resolución, pero NO se identificó un sistema maestro declarado.", "Parcial", RECORRIDO, "Alta"),
+ "pasar por los dos sistemas": (
+   "Sí. Cuando el producto queda mezclado entre EWM y WMS hay que hacer un traslado manual con una persona asignada y "
+   "la entrega baja a cero. Ocurre principalmente con Sodimac y Dina, y genera novedades de inventario.",
+   "Respondida", RECORRIDO, "Alta"),
+ "cuello de botella hoy": (
+   "El rotulado. Se rotulan todas las cajas y hoy el CEDI genera rótulos y guías —antes lo hacía la transportadora y "
+   "se perdía mercancía—. Se suman: el proceso en la puerta, que reconocen que hay que mejorar; el alistamiento de "
+   "paqueteo, que toma 5 horas; y el cargue, que puede durar todo el día. Restricción de sistema declarada: no deja "
+   "generar la guía sin facturar.", "Respondida", RECORRIDO + " · jefatura", "Alta"),
+}
+PRIORIDAD_PENDIENTE = {
+ "reabastecimiento se hace en ola": "Alta", "punto de reorden": "Alta", "cinco posiciones vacías": "Media",
+ "pedido urgente": "Media", "pone un pedido alistado mientras espera": "Alta", "cargan son los mismos": "Media",
+ "sincroniza el inventario": "Alta", "interfaz falla": "Alta", "doble digitación": "Alta",
+ "transacciones quedaron en cola": "Media", "más tiempo le hace perder": "Alta",
+ "llega a una posición y no hay producto": "Alta", "líneas se supone": "Alta", "mandara aquí": "Media",
+ "alistados sin salir": "Alta", "último re-slotting": "Media", "recibe en flujo": "Media",
+ "gente entró y salió": "Baja",
+}
+q1 = hdr + 1
+r = q1
 for who, q, why, alarma, accion in preguntas:
+    resp = est = fue = None
+    prio = "Media"
+    for clave, v in RESPUESTAS.items():
+        if clave in q:
+            resp, est, fue, prio = v; break
+    if est is None:
+        est = "Pendiente"
+        for clave, pv in PRIORIDAD_PENDIENTE.items():
+            if clave in q: prio = pv; break
     pg.cell(row=r, column=1, value=who).font = f(9, True, TAPE)
     pg.cell(row=r, column=2, value=q).font = f(10, True)
     pg.cell(row=r, column=3, value=why).font = f(9, color="6E7A86")
-    pg.cell(row=r, column=5, value=alarma).font = f(9, color=AMB_T)
-    pg.cell(row=r, column=6, value=accion).font = f(9, color=GRN_T)
+    pg.cell(row=r, column=4, value=resp).font = f(9.5, color="1A1F26")
+    pg.cell(row=r, column=5, value=est)
+    pg.cell(row=r, column=6, value=fue).font = f(9, color="6E7A86")
+    pg.cell(row=r, column=7, value=prio)
+    pg.cell(row=r, column=8, value=alarma).font = f(9, color=AMB_T)
+    pg.cell(row=r, column=9, value=accion).font = f(9, color=GRN_T)
     for c_ in range(1, N + 1):
         cell = pg.cell(row=r, column=c_); cell.border = BOX; cell.alignment = WRAP
-    pg.cell(row=r, column=4).fill = PatternFill("solid", fgColor=YELLOW)
-    pg.cell(row=r, column=4).font = f(10, color="00329B")
-    pg.row_dimensions[r].height = 40
+    for c_ in (4, 5, 6, 7):
+        pg.cell(row=r, column=c_).fill = PatternFill("solid", fgColor=YELLOW)
+    pg.cell(row=r, column=4).font = f(9.5, color="00329B")
+    for c_ in (5, 7):
+        pg.cell(row=r, column=c_).alignment = CTRW; pg.cell(row=r, column=c_).font = f(9.5, True)
+    pg.cell(row=r, column=6).alignment = CTRW
+    pg.row_dimensions[r].height = 62 if resp else 40
     r += 1
-ayuda(pg, "D{}:D{}".format(hdr + 1, r - 1), "Respuesta",
-      "Escribe la respuesta textual, no tu interpretación. Las palabras exactas valen más después.")
-pg.freeze_panes = "B{}".format(hdr + 1); pg.print_title_rows = "{0}:{0}".format(hdr)
+q2 = r - 1
+
+# contador: fórmulas ya con el rango real
+pg.cell(row=val, column=1, value='=COUNTA($B${}:$B${})'.format(q1, q2))
+for i, txt in enumerate(["Respondida", "Parcial", "Pendiente"], start=2):
+    pg.cell(row=val, column=i, value='=COUNTIF($E${}:$E${},"{}")'.format(q1, q2, txt))
+pg.cell(row=val, column=5, value='=IF($A${0}=0,"",$D${0}/$A${0})'.format(val))
+for i in range(1, 6):
+    cell = pg.cell(row=val, column=i)
+    cell.border = BOX; cell.alignment = CTR; cell.fill = PatternFill("solid", fgColor=GREY_L)
+    cell.font = f(14, True, NAVY_D)
+    cell.number_format = "0.0%" if i == 5 else "0"
+pg.cell(row=val, column=2).font = f(14, True, GRN_T)
+pg.cell(row=val, column=3).font = f(14, True, AMB_T)
+pg.cell(row=val, column=4).font = f(14, True, RED_T)
+pg.cell(row=val, column=5).font = f(14, True, RED_T)
+pg.merge_cells(start_row=val, start_column=6, end_row=val, end_column=N)
+cc = pg.cell(row=val, column=6,
+    value="Filtra la columna Estado por «Pendiente» y esa es la agenda de la reunión. La columna Prioridad ordena por dónde empezar.")
+cc.font = f(9, color="6E7A86"); cc.alignment = WRAPC
+
+lista(pg, "E{}:E{}".format(q1, q2), ["Respondida", "Parcial", "Pendiente"], "Estado de la pregunta",
+      "Respondida = ya tienes la respuesta completa. Parcial = tienes parte y la respuesta dice qué falta. Pendiente = sin respuesta.")
+lista(pg, "G{}:G{}".format(q1, q2), ["Alta", "Media", "Baja"], "Prioridad para la reunión",
+      "Alta = pregúntala sí o sí. Ordena la reunión por esta columna.")
+ayuda(pg, "D{}:D{}".format(q1, q2), "Respuesta",
+      "Escribe la respuesta textual, no tu interpretación. Si es parcial, termina la frase diciendo qué falta.")
+ayuda(pg, "F{}:F{}".format(q1, q2), "Fuente", "Quién lo dijo y cuándo. Una respuesta de la jefatura no equivale a una del operario.")
+for txt, bg, fg in (("Respondida", GRN_BG, GRN_T), ("Parcial", AMB_BG, AMB_T), ("Pendiente", RED_BG, RED_T)):
+    pg.conditional_formatting.add("E{}:E{}".format(q1, q2), CellIsRule(operator="equal",
+        formula=['"{}"'.format(txt)], fill=PatternFill("solid", fgColor=bg), font=f(9.5, True, fg)))
+pg.conditional_formatting.add("G{}:G{}".format(q1, q2), CellIsRule(operator="equal", formula=['"Alta"'],
+    fill=PatternFill("solid", fgColor=RED_BG), font=f(9.5, True, RED_T)))
+pg.freeze_panes = "B{}".format(q1); pg.print_title_rows = "{0}:{0}".format(hdr)
+
+# ---------------- notas del recorrido ----------------
+r = banda(pg, q2 + 2, N, "NOTAS DEL RECORRIDO — HECHOS QUE NO RESPONDEN NINGUNA PREGUNTA DEL BANCO", TAPE)
+hn = r
+for cols, lab in (((1, 1), "Tema"), ((2, 5), "Hecho registrado en el recorrido"), ((6, 9), "Qué abre")):
+    pg.merge_cells(start_row=hn, start_column=cols[0], end_row=hn, end_column=cols[1])
+    cc = pg.cell(row=hn, column=cols[0], value=lab)
+    cc.font = f(9, True, WHITE); cc.fill = PatternFill("solid", fgColor=NAVY); cc.alignment = CTRW
+    for c_ in range(cols[0], cols[1] + 1): pg.cell(row=hn, column=c_).border = BOX
+pg.row_dimensions[hn].height = 22
+notas = [
+    ("Paqueteo", "Corte hasta las 8:30 – 9:00 a.m. máximo.",
+     "¿Lo fija la transportadora o el CEDI? ¿Qué pasa con lo que entra después de esa hora?"),
+    ("Paqueteo", "5 horas para alistar paqueteo.",
+     "¿Contra qué volumen? ¿Cabe dentro del corte de las 9:00 a.m. o arranca del día anterior?"),
+    ("Paqueteo", "En la zona de paqueteo trabajan 15 personas.",
+     "¿Cuántas alistan, cuántas rotulan y cuántas auditan? El rotulado es el cuello declarado."),
+    ("Paqueteo", "La transportadora de paqueteo cobra por peso-volumen.",
+     "¿Se optimiza el empaque para reducir el volumen facturado? Puede ser ahorro directo."),
+    ("Rotulado y guías", "Antes la transportadora generaba guía y rótulo y se perdía mercancía. Hoy los genera el CEDI y se rotulan todas las cajas.",
+     "El cambio resolvió la pérdida pero creó el cuello de botella. ¿Cuánto tiempo agregó y cuánta pérdida evitó? Con las dos cifras se decide si se automatiza."),
+    ("Restricción de sistema", "No deja generar la guía sin facturar.",
+     "¿Cuánto retrasa el despacho? ¿Es configurable o es política? Es la respuesta parcial a si algo en el sistema restringe entregar más rápido."),
+    ("Cargue", "El cargue puede durar todo el día.",
+     "¿Cuántos muelles, cuántas personas y cuántos vehículos? Se cruza con la hoja 8."),
+    ("Cargue", "Una van de contenedor lleva mínimo 300 a 400 cajas.",
+     "¿Cuántas vans por día? Da la base para calcular productividad de cargue."),
+    ("Canales", "Marketplace agrupa Mercado Libre, Linio y Zona de Sueños, más grifería y porcelana.",
+     "¿Volumen y ciclo propio de cada canal? Los marketplace suelen tener promesa de entrega más corta."),
+    ("Canales", "Directo son clientes grandes: un despacho por cliente. Paso directo es caja completa.",
+     "¿Qué porcentaje del volumen total va por cada canal y cuál consume más recurso?"),
+    ("Sodimac", "Se queja de forma recurrente de que el carro va desorganizado porque no está armado el combo. Se organiza por tienda. Según Eli, organizarlo se paga aparte.",
+     "¿Está costeado y cobrado ese servicio? ¿Cuánto cuesta la queja frente a lo que cuesta organizarlo?"),
+    ("Inventario", "«Ajustes de inventario Ean 13 y Ean 14, caja para varios clientes, las quintas termina 5 rotura».",
+     "VERIFICAR REDACCIÓN — la nota quedó incompleta. Se transcribe literal, sin interpretar. Confirmar antes de usarla como hallazgo."),
+    ("Acción pendiente", "«Validar para consolidar por zona, sector».",
+     "¿Quién lo valida y para cuándo? Si se confirma, pasa a la hoja 11 con dueño y fecha."),
+]
+r = hn + 1
+for tema, hecho, abre in notas:
+    pg.cell(row=r, column=1, value=tema).font = f(9, True, TAPE)
+    pg.merge_cells(start_row=r, start_column=2, end_row=r, end_column=5)
+    pg.cell(row=r, column=2, value=hecho).font = f(10)
+    pg.merge_cells(start_row=r, start_column=6, end_row=r, end_column=9)
+    pg.cell(row=r, column=6, value=abre).font = f(9, color="6E7A86")
+    for c_ in range(1, N + 1):
+        cell = pg.cell(row=r, column=c_); cell.border = BOX; cell.alignment = WRAP
+    if "VERIFICAR" in abre:
+        for c_ in range(1, N + 1):
+            pg.cell(row=r, column=c_).fill = PatternFill("solid", fgColor=AMB_BG)
+    pg.row_dimensions[r].height = 34
+    r += 1
+
+# ---------------- preguntas abiertas ----------------
+r = banda(pg, r + 1, N, "PREGUNTAS ABIERTAS PARA LA REUNIÓN — LAS QUE QUEDASTE DEBIENDO EN EL RECORRIDO", "1B7A4C")
+ha = r
+for cols, lab in (((1, 4), "Pregunta"), ((5, 6), "Respuesta"), ((7, 9), "De dónde sale / por qué importa")):
+    pg.merge_cells(start_row=ha, start_column=cols[0], end_row=ha, end_column=cols[1])
+    cc = pg.cell(row=ha, column=cols[0], value=lab)
+    cc.font = f(9, True, WHITE); cc.fill = PatternFill("solid", fgColor=NAVY); cc.alignment = CTRW
+    for c_ in range(cols[0], cols[1] + 1): pg.cell(row=ha, column=c_).border = BOX
+pg.row_dimensions[ha].height = 22
+abiertas = [
+    ("¿Hay algo en el sistema que restrinja entregar más rápido?",
+     "Ya tienes una respuesta parcial: no deja generar la guía sin facturar. Falta saber si hay más restricciones y si son configurables."),
+    ("¿Por qué a un mismo cliente se le envían varios DT en la programación el mismo día?",
+     "Si un cliente recibe varios DT el mismo día, se multiplican alistamientos, rótulos y guías para un solo destino. Puede ser consolidable."),
+    ("¿Confirmar el circuito del Excel: Daniel lo recibe, lo depura y monitorea si se despachó o no?",
+     "Es el control real de la programación. Si depende de una sola persona y de un archivo, es un punto único de falla."),
+    ("¿Cuál de los dos sistemas, EWM o WMS, corresponde al CD centralizado y cuál al descentralizado?",
+     "Sin esto, ningún dato que te entreguen después es interpretable por sistema."),
+    ("¿Cuántos casos de producto mezclado entre EWM y WMS ocurren por semana?",
+     "Sabes que pasa con Sodimac y Dina y que obliga a traslado manual. Falta la frecuencia para dimensionar el costo."),
+]
+r = ha + 1
+for q, porque in abiertas:
+    pg.merge_cells(start_row=r, start_column=1, end_row=r, end_column=4)
+    pg.cell(row=r, column=1, value=q).font = f(10, True)
+    pg.merge_cells(start_row=r, start_column=5, end_row=r, end_column=6)
+    cell = pg.cell(row=r, column=5)
+    cell.fill = PatternFill("solid", fgColor=YELLOW); cell.font = f(10, color="00329B")
+    pg.merge_cells(start_row=r, start_column=7, end_row=r, end_column=9)
+    pg.cell(row=r, column=7, value=porque).font = f(9, color="6E7A86")
+    for c_ in range(1, N + 1):
+        cc = pg.cell(row=r, column=c_); cc.border = BOX; cc.alignment = WRAP
+    pg.row_dimensions[r].height = 32
+    r += 1
+ayuda(pg, "E{}:E{}".format(ha + 1, r - 1), "Respuesta", "Anótala en la reunión, textual.")
+r = nota(pg, r + 1, N,
+    "CÓMO SE USA EN LA REUNIÓN — Ordena por Prioridad y trabaja solo las que digan Pendiente; las Parciales ya traen "
+    "escrito qué pedazo falta, así que ahí preguntas una sola cosa. Dos advertencias: el rotulado como cuello de botella "
+    "lo declaró la jefatura, no un operario, por eso las preguntas del grupo «Operario» siguen pendientes y hay que "
+    "hacerlas en piso; y la nota de EAN 13 y EAN 14 quedó incompleta, así que confírmala antes de convertirla en hallazgo.", W)
 
 # ================================================================= 10 SOLICITUD DATOS
 W = [5, 18, 58, 16, 22, 17, 12, 28]; N = 8
