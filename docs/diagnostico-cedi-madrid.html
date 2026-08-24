@@ -1,0 +1,791 @@
+<title>Diagnóstico CEDI Madrid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#EEF1F3; --surface:#FFFFFF; --surface-2:#F6F8F9;
+  --line:#D2D9E0; --line-soft:#E3E8EC;
+  --ink:#131820; --ink-2:#4C5865; --ink-3:#77838F;
+  --accent:#0F4F7D; --accent-soft:#E4EEF6;
+  --tape:#C98F00;
+  --ok:#1B7A4C; --warn:#8F5900; --crit:#A82420;
+  --ok-bg:#E2F1E9; --warn-bg:#F8EEDA; --crit-bg:#F9E5E4;
+  --shadow:0 1px 2px rgba(19,24,32,.05), 0 8px 24px -16px rgba(19,24,32,.28);
+  --f-display:'Archivo','Helvetica Neue',Arial,sans-serif;
+  --f-body:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;
+  --f-mono:'IBM Plex Mono','SF Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1317; --surface:#171C22; --surface-2:#1C232A;
+    --line:#2C353E; --line-soft:#232B33;
+    --ink:#E4E9ED; --ink-2:#A2AFBB; --ink-3:#7C8996;
+    --accent:#69AFE0; --accent-soft:#16303F;
+    --tape:#E4B141;
+    --ok:#4FBE85; --warn:#DDA23C; --crit:#E4726C;
+    --ok-bg:#122a1e; --warn-bg:#2D2312; --crit-bg:#2E1817;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1317; --surface:#171C22; --surface-2:#1C232A;
+  --line:#2C353E; --line-soft:#232B33;
+  --ink:#E4E9ED; --ink-2:#A2AFBB; --ink-3:#7C8996;
+  --accent:#69AFE0; --accent-soft:#16303F;
+  --tape:#E4B141;
+  --ok:#4FBE85; --warn:#DDA23C; --crit:#E4726C;
+  --ok-bg:#122a1e; --warn-bg:#2D2312; --crit-bg:#2E1817;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:var(--f-body); font-size:16px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1060px; margin:0 auto; padding:0 24px 96px}
+.prose{max-width:70ch}
+
+/* ---------- type ---------- */
+h1,h2,h3,h4{font-family:var(--f-display); text-wrap:balance; margin:0}
+h1{font-size:clamp(34px,5.2vw,54px); font-weight:700; letter-spacing:-.022em; line-height:1.06}
+h2{font-size:clamp(23px,2.7vw,30px); font-weight:700; letter-spacing:-.014em; line-height:1.18}
+h3{font-size:18px; font-weight:600; letter-spacing:-.006em}
+h4{font-size:14.5px; font-weight:600; letter-spacing:-.003em}
+p{margin:0}
+strong{font-weight:600; color:var(--ink)}
+a{color:var(--accent)}
+.eyebrow{
+  font-family:var(--f-mono); font-size:11.5px; font-weight:500;
+  letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3);
+}
+.lede{font-size:18px; color:var(--ink-2); line-height:1.6}
+.small{font-size:14px; color:var(--ink-2)}
+.tiny{font-size:12.5px; color:var(--ink-3); line-height:1.5}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- header ---------- */
+header.masthead{
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+  margin-bottom:48px;
+}
+.masthead-inner{max-width:1060px; margin:0 auto; padding:0 24px}
+.tapebar{height:5px; background:repeating-linear-gradient(115deg,var(--tape) 0 16px,transparent 16px 30px); border-bottom:1px solid var(--line)}
+.mast-grid{display:grid; gap:26px; padding:46px 0 40px}
+@media(min-width:860px){.mast-grid{grid-template-columns:minmax(0,1.45fr) minmax(240px,.85fr); gap:56px; align-items:end}}
+.mast-meta{display:flex; flex-direction:column; gap:10px; border-left:2px solid var(--tape); padding-left:16px}
+.mast-meta div{display:flex; justify-content:space-between; gap:16px; font-size:13.5px}
+.mast-meta dt{color:var(--ink-3); font-family:var(--f-mono); font-size:11.5px; letter-spacing:.08em; text-transform:uppercase}
+.mast-meta dd{margin:0; color:var(--ink-2); text-align:right}
+
+/* ---------- sections ---------- */
+section{margin-top:64px}
+.sec-head{display:flex; flex-direction:column; gap:10px; margin-bottom:26px; padding-bottom:14px; border-bottom:1px solid var(--line)}
+.sec-head .row{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap}
+.phase-tag{
+  font-family:var(--f-mono); font-size:11.5px; font-weight:600; letter-spacing:.08em;
+  color:var(--accent); background:var(--accent-soft);
+  padding:4px 9px; border-radius:3px; white-space:nowrap;
+}
+
+/* ---------- cards ---------- */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:22px; box-shadow:var(--shadow)}
+.grid{display:grid; gap:16px}
+@media(min-width:700px){.g2{grid-template-columns:1fr 1fr} .g3{grid-template-columns:repeat(3,1fr)}}
+.stack{display:flex; flex-direction:column; gap:16px}
+.stack-sm{display:flex; flex-direction:column; gap:9px}
+.stack-lg{display:flex; flex-direction:column; gap:26px}
+
+.callout{
+  border:1px solid var(--line); border-left:3px solid var(--tape);
+  background:var(--surface); border-radius:0 6px 6px 0; padding:18px 20px;
+  display:flex; flex-direction:column; gap:8px;
+}
+.callout.acc{border-left-color:var(--accent)}
+.callout.red{border-left-color:var(--crit)}
+
+/* ---------- tables ---------- */
+.tablebox{overflow-x:auto; border:1px solid var(--line); border-radius:6px; background:var(--surface); box-shadow:var(--shadow)}
+table{border-collapse:collapse; width:100%; min-width:660px; font-size:14px}
+thead th{
+  font-family:var(--f-mono); font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-3); text-align:left; padding:12px 16px;
+  border-bottom:1px solid var(--line); background:var(--surface-2); white-space:nowrap;
+}
+tbody td{padding:13px 16px; border-bottom:1px solid var(--line-soft); vertical-align:top; color:var(--ink-2)}
+tbody tr:last-child td{border-bottom:none}
+tbody td:first-child{color:var(--ink); font-weight:500; width:26%}
+.formula{font-family:var(--f-mono); font-size:12.5px; color:var(--ink-2); line-height:1.5}
+td .num, th .num{font-variant-numeric:tabular-nums}
+tr.group td{
+  background:var(--surface-2); font-family:var(--f-mono); font-size:11px; font-weight:600;
+  letter-spacing:.11em; text-transform:uppercase; color:var(--accent); padding:9px 16px;
+}
+.flag{color:var(--crit)}
+
+.chip{
+  display:inline-block; font-family:var(--f-mono); font-size:11px; font-weight:600;
+  letter-spacing:.04em; padding:3px 8px; border-radius:3px; white-space:nowrap;
+}
+.chip-ok{background:var(--ok-bg); color:var(--ok)}
+.chip-warn{background:var(--warn-bg); color:var(--warn)}
+.chip-crit{background:var(--crit-bg); color:var(--crit)}
+.chip-n{background:var(--surface-2); color:var(--ink-3); border:1px solid var(--line)}
+
+/* ---------- station list (gemba) ---------- */
+ol.stations{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0}
+ol.stations li{
+  display:grid; gap:6px 20px; padding:20px 0; border-bottom:1px solid var(--line-soft);
+}
+@media(min-width:760px){ol.stations li{grid-template-columns:180px minmax(0,1fr)}}
+ol.stations li:last-child{border-bottom:none}
+.st-name{display:flex; flex-direction:column; gap:4px}
+.st-idx{font-family:var(--f-mono); font-size:11.5px; color:var(--tape); font-weight:600; letter-spacing:.08em}
+.st-body{display:flex; flex-direction:column; gap:8px; font-size:14.5px; color:var(--ink-2)}
+.st-body b{color:var(--ink); font-weight:600}
+
+/* ---------- checklist ---------- */
+ul.check{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px}
+ul.check li{display:grid; grid-template-columns:16px 1fr; gap:11px; align-items:start; font-size:14.5px; color:var(--ink-2)}
+ul.check li::before{
+  content:""; width:13px; height:13px; margin-top:5px; border:1.5px solid var(--ink-3);
+  border-radius:2px; display:block;
+}
+ul.plain{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:7px; font-size:14.5px; color:var(--ink-2)}
+ul.plain li::marker{color:var(--tape)}
+
+/* ---------- ranked / hierarchy ---------- */
+ol.rank{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px; counter-reset:r}
+ol.rank li{
+  counter-increment:r; display:grid; grid-template-columns:30px 1fr; gap:14px;
+  padding:14px 16px; background:var(--surface); border:1px solid var(--line); border-radius:5px;
+  font-size:14.5px; color:var(--ink-2);
+}
+ol.rank li::before{
+  content:counter(r); font-family:var(--f-mono); font-size:13px; font-weight:600; color:var(--accent);
+}
+ol.rank li b{color:var(--ink); font-weight:600}
+ol.rank li.dead{border-style:dashed; opacity:.78}
+ol.rank li.dead::before{color:var(--ink-3)}
+
+/* ---------- math box ---------- */
+.mathbox{
+  background:var(--surface-2); border:1px solid var(--line); border-radius:6px;
+  padding:18px 20px; font-family:var(--f-mono); font-size:13px; line-height:1.85; color:var(--ink-2);
+  overflow-x:auto; font-variant-numeric:tabular-nums;
+}
+.mathbox .k{color:var(--ink); font-weight:600}
+.mathbox .r{color:var(--crit); font-weight:600}
+.mathbox hr{border:none; border-top:1px dashed var(--line); margin:10px 0}
+
+figure{margin:0; display:flex; flex-direction:column; gap:10px}
+figcaption{font-size:12.5px; color:var(--ink-3); line-height:1.5}
+svg{display:block; width:100%; height:auto}
+
+footer.end{margin-top:72px; padding-top:24px; border-top:1px solid var(--line)}
+
+@media print{
+  body{background:#fff; font-size:11pt}
+  .card,.tablebox{box-shadow:none}
+  section{break-inside:avoid}
+}
+</style>
+
+<header class="masthead">
+  <div class="tapebar"></div>
+  <div class="masthead-inner">
+    <div class="mast-grid">
+      <div class="stack-sm">
+        <span class="eyebrow">Revisión operativa · Centro de distribución</span>
+        <h1>Diagnóstico<br>CEDI Madrid</h1>
+        <p class="lede" style="margin-top:8px">Qué medir, en qué orden y qué decisión toma cada número — para pasar de “se siente lleno y lento” a una causa raíz con dueño y fecha.</p>
+      </div>
+      <dl class="mast-meta">
+        <div><dt>Alcance</dt><dd>Despacho, alistamiento,<br>almacenamiento, recepción</dd></div>
+        <div><dt>Duración</dt><dd>4 semanas</dd></div>
+        <div><dt>Entregable</dt><dd>Causa raíz cuantificada<br>+ plan de 30/90 días</dd></div>
+        <div><dt>Referencias</dt><dd>Industria general.<br>Calibrar contra Madrid</dd></div>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- ============ 0. CÓMO EMPEZAR ============ -->
+<section style="margin-top:0">
+  <div class="sec-head">
+    <div class="row"><h2>Por dónde se empieza</h2></div>
+    <p class="small prose">La tentación es entrar al CEDI a mirar. No sirve: todo se ve mal cuando está lleno y no vas a poder separar síntoma de causa. La secuencia que funciona es <strong>números primero, piso después, y el piso solo para explicar los números.</strong></p>
+  </div>
+
+  <div class="grid g3">
+    <div class="card stack-sm">
+      <span class="eyebrow" style="color:var(--accent)">Paso 1 · Hoy</span>
+      <h3>Cinco números</h3>
+      <p class="small">Se sacan del WMS/ERP en una tarde y ya te dicen si el problema es del CEDI o de afuera. Están en el bloque siguiente.</p>
+    </div>
+    <div class="card stack-sm">
+      <span class="eyebrow" style="color:var(--accent)">Paso 2 · Día 1–2</span>
+      <h3>Recorrido a contracorriente</h3>
+      <p class="small">Del muelle de despacho hacia atrás hasta recepción, cronómetro en mano. Ves el flujo como lo ve el cliente.</p>
+    </div>
+    <div class="card stack-sm">
+      <span class="eyebrow" style="color:var(--accent)">Paso 3 · Día 3–5</span>
+      <h3>Cuantificar y priorizar</h3>
+      <p class="small">Pareto de errores, balance de masa, ABC de ocupación. Sale la lista corta de causas reales.</p>
+    </div>
+  </div>
+
+  <div class="callout acc" style="margin-top:22px">
+    <h4>La prueba de las cinco cifras</h4>
+    <p class="small">Antes de pisar el CEDI, pide estos cinco datos de las últimas 13 semanas. Con eso solo ya sabes el 60% de la historia:</p>
+    <ol class="plain" style="padding-left:18px; margin-top:2px">
+      <li><strong>Pallets recibidos vs. pallets despachados por semana.</strong> Si entra más de lo que sale de forma sostenida, el CEDI se llena por aritmética y ninguna mejora operativa lo va a arreglar.</li>
+      <li><strong>Ocupación de posiciones</strong> (ocupadas ÷ habilitadas), por zona.</li>
+      <li><strong>Dock-to-stock:</strong> horas entre que llega el camión y el producto queda disponible para picking.</li>
+      <li><strong>Líneas alistadas por hora-hombre</strong>, por operario y por día.</li>
+      <li><strong>Notas crédito y devoluciones con causal “error de despacho”</strong>, en pesos y en líneas.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ 1. HIPÓTESIS ============ -->
+<section>
+  <div class="sec-head">
+    <div class="row"><h2>Qué suele estar pasando</h2><span class="chip chip-n">Hipótesis a confirmar</span></div>
+    <p class="small prose">No son diagnósticos de Madrid — son las seis causas que explican la mayoría de los CEDI llenos, lentos y con errores. Cada una tiene una prueba concreta que la confirma o la descarta en menos de un día.</p>
+  </div>
+
+  <div class="tablebox">
+    <table>
+      <thead>
+        <tr><th>Hipótesis</th><th>Cómo se ve en el piso</th><th>Prueba que la confirma</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Desbalance entrada/salida</td>
+          <td>Todo lleno, sin un cuello de botella evidente. La gente dice “es que llegó mucho”.</td>
+          <td class="formula">Recibos vs. despachos en pallets, 13 semanas. Ratio &gt; 1,05 sostenido → la causa está en compras/planeación, no en el CEDI.</td>
+        </tr>
+        <tr>
+          <td>Inventario muerto ocupando posición premium</td>
+          <td>Racks llenos pero pocas salidas; polvo en las cajas de los niveles bajos.</td>
+          <td class="formula">% de posiciones con SKU sin movimiento &gt; 90 días. Arriba de 20% ahí está el espacio que falta.</td>
+        </tr>
+        <tr>
+          <td>Recepción atascada</td>
+          <td>Pallets en piso, pasillos de maniobra invadidos, montacargas dando vueltas.</td>
+          <td class="formula">Dock-to-stock &gt; 8 h, o pallets en piso con más de 48 h. Prueba de la etiqueta de fecha (abajo).</td>
+        </tr>
+        <tr>
+          <td>Slotting desactualizado</td>
+          <td>Operarios caminando mucho; los SKU que más salen están lejos o arriba.</td>
+          <td class="formula">% del tiempo de ciclo en desplazamiento. Arriba de 50% el problema es el slotting, no la gente.</td>
+        </tr>
+        <tr>
+          <td>Pedidos listos esperando transporte</td>
+          <td>Staging desbordado con producto ya rotulado; muelles ocupados por vehículos parados.</td>
+          <td class="formula">Horas entre fin de alistamiento y salida del vehículo. Permanencia en muelle &gt; 3 h.</td>
+        </tr>
+        <tr>
+          <td>Exactitud de inventario baja (ERI)</td>
+          <td>“No aparece”, reprocesos, faltantes que salen a última hora, picking que se devuelve.</td>
+          <td class="formula">Conteo ciego de 100 ubicaciones aleatorias. ERI por ubicación &lt; 95% → esta es la causa raíz de casi todo lo demás.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout red" style="margin-top:22px">
+    <h4>El círculo vicioso que hay que romper primero</h4>
+    <p class="small">Un CEDI lleno no pierde productividad de forma proporcional — la pierde como un trancón. Menos espacio libre → más doble manipulación y producto en piso → más tiempo buscando → más errores de alistamiento → más devoluciones → más inventario → menos espacio. <strong>Mientras la ocupación esté sobre 90%, cualquier medición de productividad que tomes está contaminada.</strong> Liberar espacio no es una acción entre otras: es la que habilita todas las demás.</p>
+  </div>
+
+  <figure style="margin-top:26px">
+    <div class="card">
+      <svg viewBox="0 0 720 260" role="img" aria-label="Curva que muestra cómo la productividad de alistamiento cae de forma acelerada cuando la ocupación de posiciones supera el 85 por ciento">
+        <defs>
+          <linearGradient id="dz" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--crit)" stop-opacity=".16"/>
+            <stop offset="100%" stop-color="var(--crit)" stop-opacity=".02"/>
+          </linearGradient>
+        </defs>
+        <!-- grid -->
+        <g stroke="var(--line-soft)" stroke-width="1">
+          <line x1="70" y1="30"  x2="690" y2="30"/>
+          <line x1="70" y1="80"  x2="690" y2="80"/>
+          <line x1="70" y1="130" x2="690" y2="130"/>
+          <line x1="70" y1="180" x2="690" y2="180"/>
+        </g>
+        <!-- danger zone -->
+        <rect x="512" y="30" width="178" height="180" fill="url(#dz)"/>
+        <line x1="512" y1="24" x2="512" y2="210" stroke="var(--crit)" stroke-width="1" stroke-dasharray="4 4"/>
+        <!-- axes -->
+        <line x1="70" y1="210" x2="690" y2="210" stroke="var(--line)" stroke-width="1.5"/>
+        <line x1="70" y1="24"  x2="70"  y2="210" stroke="var(--line)" stroke-width="1.5"/>
+        <!-- curve -->
+        <path d="M70 52 C 200 56, 330 62, 440 76 S 545 116, 590 152 S 655 196, 690 206"
+              fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="512" cy="106" r="4.5" fill="var(--crit)"/>
+        <!-- labels -->
+        <g font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--ink-3)">
+          <text x="62" y="34"  text-anchor="end">100%</text>
+          <text x="62" y="134" text-anchor="end">70%</text>
+          <text x="62" y="214" text-anchor="end">40%</text>
+          <text x="70"  y="230">60%</text>
+          <text x="290" y="230">75%</text>
+          <text x="512" y="230" text-anchor="middle">85%</text>
+          <text x="690" y="230" text-anchor="end">100%</text>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600">
+          <text x="524" y="60" fill="var(--crit)">ZONA DE CONGESTIÓN</text>
+          <text x="524" y="76" fill="var(--ink-3)" font-weight="400">doble manipulación,</text>
+          <text x="524" y="90" fill="var(--ink-3)" font-weight="400">búsqueda, reproceso</text>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--ink-3)" letter-spacing="1">
+          <text x="70" y="250">OCUPACIÓN DE POSICIONES →</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>Relación típica entre ocupación y productividad de alistamiento. El punto de quiebre está alrededor del 85%: por debajo, la ocupación extra casi no cuesta; por encima, cada punto cuesta cada vez más. Curva de referencia de industria — el punto exacto en Madrid depende del layout y del perfil de inventario.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 2. TABLERO ============ -->
+<section>
+  <div class="sec-head">
+    <div class="row"><h2>El tablero mínimo</h2><span class="chip chip-n">17 indicadores</span></div>
+    <p class="small prose">Todo lo que preguntaste — productividad, confiabilidad, velocidad y saturación — cabe en un tablero. La columna que más importa es la última: <strong>la bandera roja es lo que dispara una acción</strong>, no la meta. Las referencias son de industria general para CEDI de consumo masivo con WMS y radiofrecuencia; calíbralas contra el histórico de Madrid antes de convertirlas en meta.</p>
+  </div>
+
+  <div class="tablebox">
+    <table>
+      <thead>
+        <tr><th>Indicador</th><th>Fórmula</th><th>Referencia</th><th>Bandera roja</th></tr>
+      </thead>
+      <tbody>
+        <tr class="group"><td colspan="4">Productividad</td></tr>
+        <tr>
+          <td>Líneas por hora-hombre (LPH)</td>
+          <td class="formula">líneas alistadas ÷ horas hombre directas de alistamiento</td>
+          <td class="small num">60–120 pieza/caja<br>25–40 pallet completo</td>
+          <td class="small flag">Dispersión &gt; 2× entre operarios del mismo turno</td>
+        </tr>
+        <tr>
+          <td>Productividad total del CEDI</td>
+          <td class="formula">unidades despachadas ÷ <strong>todas</strong> las horas pagadas (directas + indirectas)</td>
+          <td class="small">Comparar contra LPH</td>
+          <td class="small flag">Brecha grande vs. LPH = exceso de tiempo indirecto</td>
+        </tr>
+        <tr>
+          <td>Ratio directo/indirecto</td>
+          <td class="formula">horas de mano de obra directa ÷ horas totales</td>
+          <td class="small num">≥ 70%</td>
+          <td class="small flag">&lt; 60%</td>
+        </tr>
+        <tr>
+          <td>Horas extra</td>
+          <td class="formula">horas extra ÷ horas ordinarias</td>
+          <td class="small num">&lt; 8%</td>
+          <td class="small flag">&gt; 15% sostenido → falta capacidad o mala nivelación de carga</td>
+        </tr>
+        <tr>
+          <td>Costo por línea despachada</td>
+          <td class="formula">costo total del CEDI ÷ líneas despachadas</td>
+          <td class="small">Según la red</td>
+          <td class="small flag">Sube mientras el volumen se mantiene plano</td>
+        </tr>
+
+        <tr class="group"><td colspan="4">Confiabilidad · errores de despacho</td></tr>
+        <tr>
+          <td>Exactitud de alistamiento</td>
+          <td class="formula">errores × 1.000 ÷ líneas alistadas</td>
+          <td class="small num">0,5–1,5 err/1.000 con RF<br>3–5 err/1.000 con papel</td>
+          <td class="small flag">&gt; 3 err/1.000 teniendo scanner → el scanner no se está usando como debe</td>
+        </tr>
+        <tr>
+          <td>Order fill rate</td>
+          <td class="formula">líneas despachadas completas ÷ líneas pedidas</td>
+          <td class="small num">&gt; 98%</td>
+          <td class="small flag">&lt; 95%</td>
+        </tr>
+        <tr>
+          <td>Pedido perfecto</td>
+          <td class="formula">a tiempo × completo × sin daño × documento correcto <span class="tiny">(multiplicativo)</span></td>
+          <td class="small num">92–96%</td>
+          <td class="small flag">&lt; 90%</td>
+        </tr>
+        <tr>
+          <td>ERI por ubicación</td>
+          <td class="formula">ubicaciones correctas ÷ ubicaciones contadas, conteo ciego</td>
+          <td class="small num">&gt; 97%</td>
+          <td class="small flag">&lt; 95% → arréglalo antes de tocar cualquier otra cosa</td>
+        </tr>
+        <tr>
+          <td>Devoluciones por causal CEDI</td>
+          <td class="formula">$ nota crédito por error de despacho ÷ $ despachado</td>
+          <td class="small num">&lt; 0,3%</td>
+          <td class="small flag">&gt; 0,5%</td>
+        </tr>
+
+        <tr class="group"><td colspan="4">Velocidad</td></tr>
+        <tr>
+          <td>Dock-to-stock</td>
+          <td class="formula">hora disponible en sistema − hora de llegada del vehículo</td>
+          <td class="small num">&lt; 4 h</td>
+          <td class="small flag">&gt; 8 h → esto es lo que ves como “CEDI lleno”</td>
+        </tr>
+        <tr>
+          <td>Ciclo de pedido interno</td>
+          <td class="formula">salida del vehículo − liberación del pedido</td>
+          <td class="small num">&lt; 6 h (mismo día)</td>
+          <td class="small flag">&gt; 12 h</td>
+        </tr>
+        <tr>
+          <td>Despacho a tiempo (OTD)</td>
+          <td class="formula">pedidos que salen antes del corte ÷ pedidos del día</td>
+          <td class="small num">&gt; 97%</td>
+          <td class="small flag">&lt; 93%</td>
+        </tr>
+        <tr>
+          <td>Permanencia de vehículo en muelle</td>
+          <td class="formula">hora de salida − hora de llegada del transportista</td>
+          <td class="small num">&lt; 90 min</td>
+          <td class="small flag">&gt; 3 h → el cuello está en muelle o staging</td>
+        </tr>
+
+        <tr class="group"><td colspan="4">Saturación · por qué está lleno</td></tr>
+        <tr>
+          <td>Ocupación de posiciones</td>
+          <td class="formula">posiciones ocupadas ÷ posiciones habilitadas, por zona</td>
+          <td class="small num">80–85%</td>
+          <td class="small flag">&gt; 90% en cualquier zona</td>
+        </tr>
+        <tr>
+          <td>Balance entrada/salida</td>
+          <td class="formula">pallets recibidos ÷ pallets despachados, 13 semanas</td>
+          <td class="small num">≈ 1,0</td>
+          <td class="small flag">&gt; 1,05 sostenido → la causa está fuera del CEDI</td>
+        </tr>
+        <tr>
+          <td>Inventario sin movimiento</td>
+          <td class="formula">posiciones con SKU sin salidas &gt; 90 días ÷ posiciones ocupadas</td>
+          <td class="small num">&lt; 10%</td>
+          <td class="small flag">&gt; 20% → ahí está el espacio que falta</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout" style="margin-top:22px">
+    <h4>Productividad y errores se miden juntos o no se miden</h4>
+    <p class="small">Si publicas líneas/hora sin publicar errores por mil líneas al lado, en dos semanas la gente corre más y se equivoca más, y vas a estar celebrando un indicador mientras el otro se cae. Van en el mismo tablero, por operario, en la misma pantalla. Lo mismo aplica al revés: exigir cero errores sin mirar productividad produce chequeos infinitos y despachos tarde.</p>
+  </div>
+</section>
+
+<!-- ============ 3. DATOS ============ -->
+<section>
+  <div class="sec-head">
+    <div class="row"><span class="phase-tag">FASE 0 · D-2</span><h2>Lo que pides antes de entrar</h2></div>
+    <p class="small prose">Pídelo por escrito, con fechas y formato, y con un responsable. Si algo no existe, esa ausencia ya es un hallazgo: <em>no se puede gestionar lo que no se mide</em>.</p>
+  </div>
+
+  <div class="grid g2">
+    <div class="card stack-sm">
+      <span class="eyebrow">WMS / ERP · 13 semanas</span>
+      <ul class="check">
+        <li>Movimientos de salida a nivel de línea: fecha, hora, SKU, cantidad, ubicación, operario, pedido, ruta</li>
+        <li>Movimientos de entrada con hora de llegada <strong>y</strong> hora de ubicación</li>
+        <li>Snapshot de inventario por ubicación (para ocupación y honeycombing)</li>
+        <li>Maestro de ubicaciones: total de posiciones por tipo y zona</li>
+        <li>Maestro de SKU con dimensiones, peso, empaque y paletización</li>
+        <li>Trazabilidad de pedido: creación, corte, liberación, fin de alistamiento, despacho</li>
+        <li>Novedades y devoluciones con causal</li>
+      </ul>
+    </div>
+    <div class="card stack-sm">
+      <span class="eyebrow">Gente, transporte y sitio</span>
+      <ul class="check">
+        <li>Headcount por turno y por función; horas ordinarias y extra</li>
+        <li>Ausentismo, rotación y antigüedad promedio (la curva de aprendizaje explica errores)</li>
+        <li>Vehículos programados vs. ejecutados; hora de llegada y salida; ocupación del vehículo</li>
+        <li>Layout a escala con zonas, muelles y pasillos</li>
+        <li>Presupuesto y costo real del CEDI, para costo por línea</li>
+        <li>Últimos conteos cíclicos y su resultado</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:20px">
+    <h4>Si el WMS no da esa información</h4>
+    <p class="small">Se hace muestreo de trabajo: 200–400 observaciones aleatorias por turno, anotando qué está haciendo cada operario en el instante de la observación. En dos días tienes el reparto real entre alistar, caminar, buscar, esperar y reprocesar. En CEDI sin gestión de estándares es normal encontrar 30–45% del tiempo en desplazamiento y 10–20% en búsqueda — es decir, la mitad del día no agrega valor.</p>
+  </div>
+</section>
+
+<!-- ============ 4. GEMBA ============ -->
+<section>
+  <div class="sec-head">
+    <div class="row"><span class="phase-tag">FASE 1 · DÍA 1–2</span><h2>El recorrido a contracorriente</h2></div>
+    <p class="small prose">Empiezas en la puerta por donde sale el camión y caminas hacia atrás hasta el muelle de recepción. Así ves el flujo en el orden en que el cliente lo sufre, y cada atasco te lleva solo a su causa aguas arriba. Hazlo dos veces: una en hora valle y una en el pico previo al corte — <strong>son dos CEDI distintos</strong>.</p>
+  </div>
+
+  <div class="card">
+    <ol class="stations">
+      <li>
+        <div class="st-name"><span class="st-idx">01 ← SALIDA</span><h4>Muelle de despacho</h4></div>
+        <div class="st-body">
+          <p><b>Mides:</b> vehículos esperando, tiempo de cargue por vehículo, ocupación del vehículo que sale.</p>
+          <p><b>Observas:</b> ¿hay producto rotulado esperando? ¿está marcado el piso con la capacidad máxima de cada posición de staging? ¿el conductor espera o carga?</p>
+          <p><b>Alarma:</b> staging desbordado con pedidos terminados = el cuello no es alistamiento, es transporte o programación de rutas.</p>
+        </div>
+      </li>
+      <li>
+        <div class="st-name"><span class="st-idx">02</span><h4>Chequeo y empaque</h4></div>
+        <div class="st-body">
+          <p><b>Mides:</b> % de pedidos chequeados, tiempo de chequeo, errores detectados por cada 100 pedidos chequeados.</p>
+          <p><b>Observas:</b> si chequean 100%, cuántos errores encuentran realmente. El chequeo total detecta apenas ~85% de los errores y cuesta como una segunda operación de picking.</p>
+          <p><b>Alarma:</b> chequeo 100% con tasa de detección baja → estás pagando un seguro que no cubre.</p>
+        </div>
+      </li>
+      <li>
+        <div class="st-name"><span class="st-idx">03</span><h4>Alistamiento</h4></div>
+        <div class="st-body">
+          <p><b>Mides:</b> sigue a 3–5 operarios un ciclo completo cada uno, con cronómetro. Separa <b>tiempo de desplazamiento</b> de <b>tiempo de toma</b>.</p>
+          <p><b>Observas:</b> ¿lee el scanner en cada línea o lo omite? ¿devuelve producto? ¿pregunta dónde está algo?</p>
+          <p><b>Alarma:</b> desplazamiento &gt; 50% del ciclo → el problema es el slotting. Que un operario “no encuentre” más de una vez por hora → el problema es el ERI.</p>
+        </div>
+      </li>
+      <li>
+        <div class="st-name"><span class="st-idx">04</span><h4>Reabastecimiento de picking</h4></div>
+        <div class="st-body">
+          <p><b>Mides:</b> agotados internos por turno — cuántas veces una posición de picking quedó vacía con pedido pendiente.</p>
+          <p><b>Observas:</b> si el reabastecimiento va corriendo detrás del picking en vez de ir adelante.</p>
+          <p><b>Alarma:</b> esta es la causa oculta número uno de baja productividad, y casi nunca se mide.</p>
+        </div>
+      </li>
+      <li>
+        <div class="st-name"><span class="st-idx">05</span><h4>Almacenamiento</h4></div>
+        <div class="st-body">
+          <p><b>Mides:</b> en una muestra de 4–6 pasillos, cuenta posiciones ocupadas, vacías y <b>parcialmente ocupadas</b> (una caja sola bloqueando una posición completa — el efecto panal).</p>
+          <p><b>Observas:</b> si los SKU de mayor rotación están en la zona dorada — altura entre cintura y hombro, cerca del muelle.</p>
+          <p><b>Alarma:</b> producto A en el último pasillo o en el nivel alto. Cada uno de esos es tiempo perdido varias veces al día.</p>
+        </div>
+      </li>
+      <li>
+        <div class="st-name"><span class="st-idx">06</span><h4>Recepción</h4></div>
+        <div class="st-body">
+          <p><b>Mides:</b> dock-to-stock real y cantidad de pallets en piso sin ubicar.</p>
+          <p><b>Observas:</b> si la recepción se hace por lotes al final del turno en vez de en flujo.</p>
+          <p><b>Alarma:</b> pasillos de maniobra invadidos por producto sin ubicar — esto multiplica todos los tiempos del CEDI.</p>
+        </div>
+      </li>
+      <li>
+        <div class="st-name"><span class="st-idx">07 ← ENTRADA</span><h4>Devoluciones, averías, cuarentena</h4></div>
+        <div class="st-body">
+          <p><b>Mides:</b> metros cuadrados ocupados y antigüedad del producto más viejo de la zona.</p>
+          <p><b>Observas:</b> quién tiene la autoridad para dar disposición final y cada cuánto la ejerce.</p>
+          <p><b>Alarma:</b> zona sin dueño ni fecha límite. Es donde se acumula silenciosamente el espacio del CEDI.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <div class="grid g2" style="margin-top:22px">
+    <div class="callout">
+      <h4>La prueba de la etiqueta de fecha</h4>
+      <p class="small">El día 1, pon una etiqueta con la fecha de hoy en <strong>cada pallet que esté en piso</strong> — recepción, staging, devoluciones, pasillos. Vuelve a las 48 horas. Todo lo que siga ahí con la etiqueta original es tu backlog real, y lo puedes fotografiar y contar. Es el dato más contundente que vas a llevar a la reunión de gerencia, y cuesta una caja de etiquetas.</p>
+    </div>
+    <div class="callout">
+      <h4>Cinco preguntas — al operario, no al supervisor</h4>
+      <ul class="plain" style="padding-left:18px">
+        <li>¿Qué es lo que más tiempo le hace perder en el día?</li>
+        <li>¿Cuántas veces al día no encuentra el producto donde dice el sistema?</li>
+        <li>Cuando se equivoca, ¿por qué cree que pasó?</li>
+        <li>¿Cuántas líneas se supone que debe hacer por hora?</li>
+        <li>¿Qué hay ahí que no debería estar?</li>
+      </ul>
+      <p class="tiny">Si a la cuarta no saben responder, no hay estándar de trabajo. Y sin estándar no hay productividad que gestionar, solo esfuerzo individual.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. POR QUÉ LLENO ============ -->
+<section>
+  <div class="sec-head">
+    <div class="row"><span class="phase-tag">FASE 2 · DÍA 3–5</span><h2>Por qué está tan lleno</h2></div>
+    <p class="small prose">Antes de pedir más bodega o más racks, haz el balance de masa. Es aritmética de primaria y decide si el problema es del CEDI o de aguas arriba — y por lo tanto, quién tiene que resolverlo.</p>
+  </div>
+
+  <div class="grid g2">
+    <div class="stack">
+      <h3>Balance de masa · 13 semanas</h3>
+      <div class="mathbox">
+        <span class="k">Entrada</span>   pallets recibidos por semana<br>
+        <span class="k">Salida</span>    pallets despachados por semana<br>
+        <hr>
+        <span class="k">Acumulación</span> = Σ(entrada − salida)<br>
+        <span class="k">Ratio</span>       = Σentrada ÷ Σsalida<br>
+        <hr>
+        Ratio ≈ 1,00 &nbsp;→ el CEDI está en equilibrio<br>
+        Ratio &gt; 1,05 &nbsp;→ <span class="r">se llena por diseño</span><br>
+        <span class="tiny" style="color:var(--ink-3)">Ninguna mejora operativa corrige un ratio &gt; 1</span>
+      </div>
+      <p class="small">Si el ratio es mayor a uno de forma sostenida, la conversación no es con el jefe del CEDI: es con compras, con planeación de demanda o con quien haya aprobado una compra oportunista, una promoción sin plan de salida o un contenedor que llegó completo. El CEDI es el que muestra el síntoma, no el que lo causó.</p>
+    </div>
+
+    <div class="stack">
+      <h3>Déficit de capacidad · ejemplo</h3>
+      <div class="mathbox">
+        <span class="tiny" style="color:var(--ink-3)">Cifras de ejemplo, no de Madrid</span><br>
+        Posiciones habilitadas &nbsp;&nbsp;&nbsp;&nbsp;<span class="k">2.800</span><br>
+        × ocupación objetivo 85% &nbsp;&nbsp;<span class="k">2.380</span> útiles<br>
+        <hr>
+        Inventario actual &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">2.660</span> pallets eq.<br>
+        <span class="r">Déficit</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="r">280 posiciones</span><br>
+        <hr>
+        Sin movimiento &gt; 90 d &nbsp;&nbsp;&nbsp;&nbsp;<span class="k">610</span> posiciones<br>
+        <span class="tiny" style="color:var(--ink-3)">El déficit cabe dos veces dentro del inventario muerto</span>
+      </div>
+      <p class="small">Este cálculo es el que cambia la decisión. Casi siempre el espacio que falta ya está adentro, inmovilizado en producto que no rota. Alquilar bodega adicional antes de hacer la purga es pagar arriendo por almacenar el problema — y además lo esconde, porque el síntoma desaparece por unos meses y vuelve peor.</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top:36px">Dónde está realmente el espacio</h3>
+  <p class="small prose" style="margin-top:8px; margin-bottom:16px">Cruza clasificación ABC (por líneas de salida, no por valor) contra días de inventario y contra posiciones ocupadas. El patrón es sorprendentemente estable entre CEDI:</p>
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>Clase</th><th>% de las salidas</th><th>Posiciones que suele ocupar</th><th>Días de inventario objetivo</th><th>Acción</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td class="small num">80%</td><td class="small num">15–20%</td><td class="small num">15–30 días</td><td class="small">Zona dorada, reabastecimiento anticipado</td></tr>
+        <tr><td>B</td><td class="small num">15%</td><td class="small num">25–30%</td><td class="small num">30–60 días</td><td class="small">Racks selectivos, revisión trimestral</td></tr>
+        <tr><td>C</td><td class="small num">5%</td><td class="small num">50–60%</td><td class="small num">&lt; 90 días</td><td class="small">Almacenamiento denso, posiciones pequeñas</td></tr>
+        <tr><td>Sin movimiento</td><td class="small num">0%</td><td class="small num flag">10–25%</td><td class="small">—</td><td class="small">Liquidar, devolver al proveedor o dar de baja con acta</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tiny prose" style="margin-top:10px">Distribución típica de referencia. Si en Madrid la última fila pasa de 20%, el problema de espacio es un problema de decisión comercial y financiera, no de layout.</p>
+</section>
+
+<!-- ============ 6. ERRORES ============ -->
+<section>
+  <div class="sec-head">
+    <div class="row"><h2>Errores de despacho: clasificar antes de corregir</h2></div>
+    <p class="small prose">El error más caro en esta parte es asumir que la causa es falta de cuidado. Primero se clasifica; el patrón dice la causa, y la causa dice el control. Corta el mismo conjunto de errores por seis dimensiones:</p>
+  </div>
+
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>Corte</th><th>Si se concentra ahí…</th><th>Lo que significa</th></tr></thead>
+      <tbody>
+        <tr><td>Por SKU</td><td class="small">Pocos SKU explican muchos errores</td><td class="small">Son productos gemelos — misma familia, distinto sabor, gramaje o color. Es un problema de ubicación física, no de atención.</td></tr>
+        <tr><td>Por hora del día</td><td class="small">Pico en las últimas horas antes del corte</td><td class="small">Es diseño de carga: todo el volumen llega junto. Se corrige nivelando los cortes por ruta, no exigiéndole más a la gente.</td></tr>
+        <tr><td>Por operario</td><td class="small">Concentrado en gente con menos de 90 días</td><td class="small">Curva de aprendizaje y entrenamiento, no desempeño. Revisa también rotación: si es alta, siempre vas a tener novatos.</td></tr>
+        <tr><td>Por zona</td><td class="small">Una zona o pasillo específico</td><td class="small">Señalización, iluminación, ubicaciones mal rotuladas o dos SKU parecidos vecinos.</td></tr>
+        <tr><td>Por tipo</td><td class="small">Cantidad, no SKU equivocado</td><td class="small">Unidad de manejo ambigua: el mismo producto en varias presentaciones o empaques mixtos.</td></tr>
+        <tr><td>Por cliente/ruta</td><td class="small">Un cliente concentra los reclamos</td><td class="small">Puede ser error del CEDI o puede ser el único que reclama bien. Verifícalo antes de actuar.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top:34px">Jerarquía de controles</h3>
+  <p class="small prose" style="margin-top:8px; margin-bottom:14px">De más a menos efectivo. Siempre agota el nivel de arriba antes de bajar al siguiente — es más barato y no depende de la disciplina diaria de nadie.</p>
+  <ol class="rank">
+    <li><span><b>Eliminar la ambigüedad.</b> Separar físicamente los SKU gemelos, corregir el slotting, rotular ubicaciones con color por familia. El error deja de ser posible.</span></li>
+    <li><span><b>Poka-yoke.</b> Escaneo obligatorio línea por línea, verificación por peso al cerrar la caja, pick-to-light o voz en las zonas críticas. El sistema no deja avanzar si está mal.</span></li>
+    <li><span><b>Verificación dirigida.</b> Chequear el 100% de lo que históricamente falla — alto valor, SKU gemelos, clientes sensibles — y liberar el resto por muestreo. Más barato y más efectivo que chequear todo.</span></li>
+    <li><span><b>Estándar y entrenamiento.</b> Trabajo estándar escrito, certificación del operario antes de operar solo, acompañamiento en los primeros 90 días.</span></li>
+    <li class="dead"><span><b>Pedir más cuidado.</b> No es un control y no cuenta como acción en un plan. Si el plan termina aquí, el indicador vuelve a su nivel anterior en tres semanas.</span></li>
+  </ol>
+
+  <div class="callout red" style="margin-top:22px">
+    <h4>Regla de precedencia</h4>
+    <p class="small">No se puede tener confiabilidad de despacho con ERI bajo. Si el conteo ciego te da menos de 95% de exactitud por ubicación, todo lo que hagas sobre el proceso de alistamiento va a rendir poco, porque el operario está partiendo de información falsa. <strong>Orden correcto: exactitud de inventario → slotting → método de alistamiento → controles de verificación.</strong></p>
+  </div>
+</section>
+
+<!-- ============ 7. PLAN ============ -->
+<section>
+  <div class="sec-head">
+    <div class="row"><span class="phase-tag">FASE 3 · SEMANA 2–4</span><h2>Ganancias rápidas, sin inversión</h2></div>
+    <p class="small prose">Todo esto se hace con la gente y los equipos que ya hay. Los rangos de impacto son referencias de industria: sirven para priorizar, no para prometer.</p>
+  </div>
+
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>Acción</th><th>Impacto típico</th><th>Esfuerzo</th><th>Se ve en</th></tr></thead>
+      <tbody>
+        <tr><td>Purga de inventario sin movimiento &gt; 180 días</td><td class="small">Libera 10–25% de posiciones</td><td><span class="chip chip-warn">Medio</span> <span class="tiny">requiere decisión comercial</span></td><td class="small num">3–6 semanas</td></tr>
+        <tr><td>Re-slotting de los 200 SKU de mayor rotación a zona dorada</td><td class="small">+10 a 25% en líneas/hora</td><td><span class="chip chip-warn">Medio</span> <span class="tiny">un fin de semana</span></td><td class="small num">Inmediato</td></tr>
+        <tr><td>Reabastecimiento en ola, antes del turno y no durante</td><td class="small">Elimina agotados internos</td><td><span class="chip chip-ok">Bajo</span></td><td class="small num">1 semana</td></tr>
+        <tr><td>Estándar por hora + tablero visual en piso</td><td class="small">+5 a 15%, sin inversión</td><td><span class="chip chip-ok">Bajo</span></td><td class="small num">2 semanas</td></tr>
+        <tr><td>Cortes de pedido escalonados por ruta</td><td class="small">Aplana el pico, baja errores y horas extra</td><td><span class="chip chip-warn">Medio</span> <span class="tiny">acuerdo con comercial</span></td><td class="small num">2–4 semanas</td></tr>
+        <tr><td>Marcación de piso en staging con capacidad máxima visible</td><td class="small">Hace visible el atasco antes de que ocurra</td><td><span class="chip chip-ok">Bajo</span></td><td class="small num">Inmediato</td></tr>
+        <tr><td>Chequeo dirigido por riesgo en vez de 100%</td><td class="small">Libera gente y sube la detección</td><td><span class="chip chip-ok">Bajo</span> <span class="tiny">tras tener el Pareto</span></td><td class="small num">2 semanas</td></tr>
+        <tr><td>Congelar compras de SKU con &gt; 90 días de inventario</td><td class="small">Frena la acumulación en origen</td><td><span class="chip chip-crit">Alto</span> <span class="tiny">decisión de gerencia</span></td><td class="small num">4–8 semanas</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top:34px">La rutina que sostiene el resultado</h3>
+  <div class="grid g3" style="margin-top:14px">
+    <div class="card stack-sm">
+      <span class="eyebrow" style="color:var(--tape)">Diario · 15 min</span>
+      <h4>De pie, en el piso</h4>
+      <p class="small">Los cinco indicadores del día anterior, en un tablero físico. Qué se salió de rango, quién lo toma, para cuándo. Sin computador y sin presentación.</p>
+    </div>
+    <div class="card stack-sm">
+      <span class="eyebrow" style="color:var(--tape)">Semanal · 45 min</span>
+      <h4>Causa raíz</h4>
+      <p class="small">Un solo Pareto — el que más duele esa semana — hasta la causa real. Una acción, un dueño, una fecha. Revisión de los compromisos de la semana anterior antes de abrir temas nuevos.</p>
+    </div>
+    <div class="card stack-sm">
+      <span class="eyebrow" style="color:var(--tape)">Mensual</span>
+      <h4>ABC y slotting</h4>
+      <p class="small">Reclasificación ABC, reubicación de lo que cambió de clase, revisión de ocupación por zona y de inventario sin movimiento con compras presente en la mesa.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. TRAMPAS ============ -->
+<section>
+  <div class="sec-head">
+    <div class="row"><h2>Trampas de esta evaluación</h2></div>
+  </div>
+  <div class="grid g2">
+    <div class="card stack-sm">
+      <h4>Medir el CEDI cuando está saturado</h4>
+      <p class="small">Con ocupación sobre 90%, la productividad que midas es la de un CEDI congestionado, no la del proceso. Registra la ocupación junto a cada medición para poder comparar después.</p>
+    </div>
+    <div class="card stack-sm">
+      <h4>Creerle a la exactitud “por valor”</h4>
+      <p class="small">La exactitud de inventario en pesos siempre se ve bien, porque los faltantes y sobrantes se compensan. La que importa es binaria por ubicación: correcta o incorrecta.</p>
+    </div>
+    <div class="card stack-sm">
+      <h4>Ampliar la bodega antes de purgar</h4>
+      <p class="small">Es la decisión más costosa y más frecuente. Haz primero el cálculo de déficit contra el inventario sin movimiento; casi siempre el espacio ya está adentro.</p>
+    </div>
+    <div class="card stack-sm">
+      <h4>Culpar al operario por un problema de diseño</h4>
+      <p class="small">Si los errores se concentran en la última hora antes del corte, o en SKU gemelos vecinos, no es un problema de personas. Cambiar personas no cambia el resultado.</p>
+    </div>
+    <div class="card stack-sm">
+      <h4>Anunciar la medición como control</h4>
+      <p class="small">Si la gente entiende que mides para sancionar, los datos se deterioran de inmediato: dejan de reportar novedades y los errores se esconden. Explica desde el día uno que mides el proceso, no a las personas.</p>
+    </div>
+    <div class="card stack-sm">
+      <h4>Arrancar quince iniciativas</h4>
+      <p class="small">Tres acciones terminadas valen más que quince abiertas. Prioriza por impacto sobre el cuello de botella real y cierra antes de abrir lo siguiente.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="end">
+  <p class="tiny prose">Marco de evaluación operativa para centro de distribución. Los valores de referencia provienen de práctica estándar en CEDI de consumo masivo con WMS y radiofrecuencia, y deben calibrarse contra el histórico propio antes de fijarse como meta. Los ejemplos numéricos son ilustrativos y no corresponden a datos de la operación de Madrid.</p>
+</footer>
+
+</div>
