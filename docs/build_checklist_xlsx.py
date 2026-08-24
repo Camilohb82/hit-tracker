@@ -216,6 +216,7 @@ ws.row_dimensions[r].height = 22
 r += 1
 ruta = [
     ("Al llegar", "Apertura de 10 minutos, de pie. Preguntar la hora de corte y el esquema de programación de salidas.", "1 · 7"),
+    ("Al llegar", "Pedir los indicadores que ellos reportan. No los mires hasta terminar de medir.", "12 Indicadores"),
     ("Primeros 30 min", "Barrido 1 de la cara de picking · etiquetar producto en piso · encargar el conteo ciego.", "5 · 2 · 4"),
     ("Primeros 30 min", "Escoger 20 pedidos del día y anotar su hora de liberación. Es el arranque del cronómetro.", "6 Seguimiento"),
     ("Mañana", "Recorrido a contracorriente y conteo de ocupación en 5 pasillos.", "2 Ocupación"),
@@ -279,6 +280,7 @@ mc = wb.create_sheet("8 Muelle y cargue")
 pg = wb.create_sheet("9 Preguntas")
 sd = wb.create_sheet("10 Solicitud datos")
 hz = wb.create_sheet("11 Hallazgos")
+id_ = wb.create_sheet("12 Indicadores declarados")
 gl = wb.create_sheet("Glosario")
 
 # ================================================================= 1 CHECKLIST
@@ -295,6 +297,10 @@ acciones = [
      "Dilo en el primer minuto y repítelo. Si creen que vienes a sancionar, los datos se dañan hoy."),
     ("Antes de bajarte", "Verificar EPP: botas, chaleco, casco si aplica.",
      "Llegar sin EPP cuesta 40 minutos de espera y credibilidad."),
+    ("Al llegar", "Pedir los indicadores que el CEDI reporta y anotarlos en la hoja 12.",
+     "Pídelos en la apertura pero no los mires hasta terminar de medir: mismo principio del conteo ciego."),
+    ("Al llegar", "Preguntar el alcance de cada uno de los dos WMS.",
+     "Hoja 9, bloque Dos WMS. Define de qué sistema sale cada dato que te entreguen después."),
     ("Primeros 30 min", "Barrido 1 de la cara de picking.",
      "Hoja 5. Recorre las posiciones de picking y clasifica cada una: vacía, en riesgo u OK."),
     ("Primeros 30 min", "Escoger 20 pedidos del día y anotar su hora de liberación.",
@@ -751,102 +757,131 @@ r = nota(rb, c1_ + 4, N,
 rb.freeze_panes = "A{}".format(ejA); rb.print_title_rows = "{0}:{0}".format(hdrA)
 
 # ================================================================= 6 SEGUIMIENTO PEDIDOS
-W = [14, 20, 12, 9, 12, 14, 13, 12, 13, 13, 13, 12, 13, 15, 11, 12, 13, 12, 26]; N = 19
+W = [14, 20, 15, 12, 9, 12, 14, 13, 12, 13, 13, 13, 12, 13, 15, 11, 12, 13, 12, 26]; N = 20
 setup(sp, W, TAPE)
 r = titulo(sp, 1, N, "6 · SEGUIMIENTO DE PEDIDOS — DEL PEDIDO AL CAMIÓN",
            "El corazón del día. Mide cuánto avanza el pedido y cuánto pasa quieto: en la mayoría de CEDI, entre 60 y 80% de su ciclo es espera.")
 r = bloque(sp, r, N, W,
-    "Reconstruir el ciclo completo de pedidos reales y separar el tiempo de trabajo del tiempo de espera, en especial el que pasa alistado esperando cargue.",
+    "Reconstruir el ciclo completo de pedidos reales, separar el tiempo de trabajo del tiempo de espera, y ver si el ciclo cambia según el WMS que procesó el pedido.",
     "Tú. Las horas se copian de la orden, del tablero o preguntando en cada estación.",
     "10 minutos al escoger los pedidos y unos minutos cada vez que pases por una estación.",
-    "Esta hoja. Si el WMS entrega las marcas de tiempo, se pegan encima y las fórmulas siguen funcionando.",
-    ["Escoge 20 pedidos del día apenas llegues. De rutas distintas y de horas distintas — no los que te sugieran.",
+    "Esta hoja. Si alguno de los dos WMS entrega las marcas de tiempo, se pegan encima y las fórmulas siguen funcionando.",
+    ["Escoge 20 pedidos del día apenas llegues. De rutas distintas, de horas distintas y de los dos WMS — no los que te sugieran.",
+     "Marca en la columna WMS cuál sistema procesó cada pedido. Al final la hoja compara el ciclo promedio de uno contra el otro.",
      "Anota la hora de liberación de cada uno: es cuando arranca el cronómetro del pedido.",
      "Cada vez que pases por alistamiento, chequeo, staging o muelle, anota las horas que ya se cumplieron. No tienes que quedarte parado esperando.",
      "Al cierre completa las horas de cargue y de salida del vehículo. Los pedidos incompletos igual sirven: las columnas que se puedan calcular se calculan.",
-     "Si consigues la descarga del WMS con las mismas marcas de tiempo, pégala desde la primera fila de datos: las columnas grises se recalculan solas. Para más de 60 pedidos, arrastra las fórmulas hacia abajo."],
+     "Si consigues la descarga con las mismas marcas de tiempo, pégala desde la primera fila de datos. Para más de 60 pedidos, arrastra las fórmulas hacia abajo."],
     ["Escribe todas las horas en formato HH:MM. Por ejemplo 14:05, no «2 y cinco».",
      "LIBERACIÓN es cuando el pedido queda disponible para alistar, no cuando el cliente lo puso.",
      "FIN DE ALISTAMIENTO es cuando el pedido queda completo, antes de chequeo.",
      "INICIO DE CARGUE es cuando el primer bulto sube al vehículo, no cuando el vehículo llega.",
+     "En WMS marca «Ambos» solo si el pedido efectivamente se tocó en los dos sistemas; esos son los casos que más tiempo pierden.",
      "Si una estación no existe en Madrid (por ejemplo, no hay chequeo aparte), deja esa hora vacía: el ciclo total y el porcentaje de espera se siguen calculando bien.",
      "No inventes horas. Una celda vacía es mejor que un dato aproximado: la fila incompleta no distorsiona los promedios."],
     ["Cuando un pedido queda alistado y no sale, ¿dónde se pone y cuál es la capacidad de ese espacio?",
      "¿Por qué esperó el pedido que más esperó hoy? Pregúntalo señalando ese pedido concreto.",
      "¿Se alista contra la hora de cita del vehículo o contra el corte general?",
      "¿Quién avisa a despacho que un pedido ya está listo, y cómo?",
+     "Si el ciclo de un WMS es más largo que el del otro, ¿a qué lo atribuyen ellos?",
      "¿Cuántos pedidos del día anterior quedaron alistados sin salir?"])
 hdr = r
-r = tabla(sp, r, ["Pedido", "Ruta o cliente", "Prioridad", "Líneas", "Hora liberación", "Inicio alistamiento",
-                  "Fin alistamiento", "Fin chequeo", "Inicio cargue", "Salida del vehículo",
-                  "Espera para arrancar (min)", "Alistamiento (min)", "Espera a chequeo (min)",
-                  "Alistado esperando cargue (min)", "Cargue (min)", "Ciclo total (min)",
-                  "% del ciclo en espera", "Min por línea", "Observación"], alturas=44)
+r = tabla(sp, r, ["Pedido", "Ruta o cliente", "WMS", "Prioridad", "Líneas", "Hora liberación",
+                  "Inicio alistamiento", "Fin alistamiento", "Fin chequeo", "Inicio cargue",
+                  "Salida del vehículo", "Espera para arrancar (min)", "Alistamiento (min)",
+                  "Espera a chequeo (min)", "Alistado esperando cargue (min)", "Cargue (min)",
+                  "Ciclo total (min)", "% del ciclo en espera", "Min por línea", "Observación"], alturas=46)
 FORMS = [
-    (11, '=IF(OR($E{0}="",$F{0}=""),"",($F{0}-$E{0})*1440)'),
     (12, '=IF(OR($F{0}="",$G{0}=""),"",($G{0}-$F{0})*1440)'),
     (13, '=IF(OR($G{0}="",$H{0}=""),"",($H{0}-$G{0})*1440)'),
     (14, '=IF(OR($H{0}="",$I{0}=""),"",($I{0}-$H{0})*1440)'),
     (15, '=IF(OR($I{0}="",$J{0}=""),"",($J{0}-$I{0})*1440)'),
-    (16, '=IF(OR($E{0}="",$J{0}=""),"",($J{0}-$E{0})*1440)'),
-    (17, '=IF(OR($P{0}="",$L{0}="",$O{0}="",$P{0}=0),"",($P{0}-$L{0}-$O{0})/$P{0})'),
-    (18, '=IF(OR($L{0}="",$D{0}="",$D{0}=0),"",$L{0}/$D{0})'),
+    (16, '=IF(OR($J{0}="",$K{0}=""),"",($K{0}-$J{0})*1440)'),
+    (17, '=IF(OR($F{0}="",$K{0}=""),"",($K{0}-$F{0})*1440)'),
+    (18, '=IF(OR($Q{0}="",$M{0}="",$P{0}="",$Q{0}=0),"",($Q{0}-$M{0}-$P{0})/$Q{0})'),
+    (19, '=IF(OR($M{0}="",$E{0}="",$E{0}=0),"",$M{0}/$E{0})'),
 ]
 ej = r
-ejemplo(sp, ej, N, ["EJ ▸ PED-88213", "Ruta Norte 3", "Alta", 34, "08:00", "09:20", "10:35", "10:55",
-                    "14:10", "15:05", None, None, None, None, None, None, None, None,
+ejemplo(sp, ej, N, ["EJ ▸ PED-88213", "Ruta Norte 3", "Centralizado", "Alta", 34, "08:00", "09:20",
+                    "10:35", "10:55", "14:10", "15:05", None, None, None, None, None, None, None, None,
                     "Alistado a las 10:55 y cargó a las 14:10"])
 for col, fm in FORMS: sp.cell(row=ej, column=col, value=fm.format(ej))
-sp.cell(row=ej, column=17).number_format = "0.0%"; sp.cell(row=ej, column=18).number_format = "0.0"
+sp.cell(row=ej, column=18).number_format = "0.0%"; sp.cell(row=ej, column=19).number_format = "0.0"
 d1, d2 = ej + 1, ej + 60
 for rr in range(d1, d2 + 1):
     for col, fm in FORMS: sp.cell(row=rr, column=col, value=fm.format(rr))
-cuerpo(sp, d1, d2, N, entrada=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 19), calc=tuple(range(11, 19)), h=17)
+cuerpo(sp, d1, d2, N, entrada=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 20), calc=tuple(range(12, 20)), h=17)
 for rr in range(d1, d2 + 1):
-    for c_ in range(3, 19):
+    for c_ in range(3, 20):
         sp.cell(row=rr, column=c_).alignment = CTR
-        if 5 <= c_ <= 10: sp.cell(row=rr, column=c_).number_format = "hh:mm"
-        elif 11 <= c_ <= 16: sp.cell(row=rr, column=c_).number_format = "0"
-    sp.cell(row=rr, column=17).number_format = "0.0%"; sp.cell(row=rr, column=18).number_format = "0.0"
+        if 6 <= c_ <= 11: sp.cell(row=rr, column=c_).number_format = "hh:mm"
+        elif 12 <= c_ <= 17: sp.cell(row=rr, column=c_).number_format = "0"
+    sp.cell(row=rr, column=18).number_format = "0.0%"; sp.cell(row=rr, column=19).number_format = "0.0"
 tr = d2 + 1
 total_row(sp, tr, N, "TOTAL / PROMEDIO")
-sp.cell(row=tr, column=4, value='=IF(SUM(D{0}:D{1})=0,"",SUM(D{0}:D{1}))'.format(d1, d2))
-for c_ in range(11, 17):
+sp.cell(row=tr, column=5, value='=IF(SUM(E{0}:E{1})=0,"",SUM(E{0}:E{1}))'.format(d1, d2))
+for c_ in range(12, 18):
     L = get_column_letter(c_)
     sp.cell(row=tr, column=c_, value='=IF(COUNT({0}{1}:{0}{2})=0,"",AVERAGE({0}{1}:{0}{2}))'.format(L, d1, d2))
     sp.cell(row=tr, column=c_).number_format = "0"
-sp.cell(row=tr, column=17,
-        value='=IF(SUM($P${0}:$P${1})=0,"",(SUM($P${0}:$P${1})-SUM($L${0}:$L${1})-SUM($O${0}:$O${1}))/SUM($P${0}:$P${1}))'.format(d1, d2))
-sp.cell(row=tr, column=17).number_format = "0.0%"
 sp.cell(row=tr, column=18,
-        value='=IF(OR(SUM($L${0}:$L${1})=0,SUM($D${0}:$D${1})=0),"",SUM($L${0}:$L${1})/SUM($D${0}:$D${1}))'.format(d1, d2))
-sp.cell(row=tr, column=18).number_format = "0.0"
-KEY["espera_cargue"] = "'6 Seguimiento pedidos'!$N${}".format(tr)
-KEY["pct_espera"] = "'6 Seguimiento pedidos'!$Q${}".format(tr)
-sp.conditional_formatting.add("N{0}:N{0}".format(tr), CellIsRule(operator="greaterThan", formula=["180"],
+        value='=IF(SUM($Q${0}:$Q${1})=0,"",(SUM($Q${0}:$Q${1})-SUM($M${0}:$M${1})-SUM($P${0}:$P${1}))/SUM($Q${0}:$Q${1}))'.format(d1, d2))
+sp.cell(row=tr, column=18).number_format = "0.0%"
+sp.cell(row=tr, column=19,
+        value='=IF(OR(SUM($M${0}:$M${1})=0,SUM($E${0}:$E${1})=0),"",SUM($M${0}:$M${1})/SUM($E${0}:$E${1}))'.format(d1, d2))
+sp.cell(row=tr, column=19).number_format = "0.0"
+KEY["espera_cargue"] = "'6 Seguimiento pedidos'!$O${}".format(tr)
+KEY["pct_espera"] = "'6 Seguimiento pedidos'!$R${}".format(tr)
+KEY["ciclo_total"] = "'6 Seguimiento pedidos'!$Q${}".format(tr)
+sp.conditional_formatting.add("O{0}:O{0}".format(tr), CellIsRule(operator="greaterThan", formula=["180"],
     fill=PatternFill("solid", fgColor=RED_BG), font=f(10.5, True, RED_T)))
-sp.conditional_formatting.add("Q{0}:Q{0}".format(tr), CellIsRule(operator="greaterThan", formula=["0.6"],
+sp.conditional_formatting.add("R{0}:R{0}".format(tr), CellIsRule(operator="greaterThan", formula=["0.6"],
     fill=PatternFill("solid", fgColor=RED_BG), font=f(10.5, True, RED_T)))
-sp.conditional_formatting.add("N{}:N{}".format(d1, d2), CellIsRule(operator="greaterThan", formula=["180"],
+sp.conditional_formatting.add("O{}:O{}".format(d1, d2), CellIsRule(operator="greaterThan", formula=["180"],
     fill=PatternFill("solid", fgColor=RED_BG), font=f(10, color=RED_T)))
-lista(sp, "C{}:C{}".format(d1, d2), ["Alta", "Media", "Baja", "Urgente"], "Prioridad declarada",
+# --- comparativo de ciclo por WMS ---
+cw = tr + 2
+sp.merge_cells(start_row=cw, start_column=1, end_row=cw, end_column=20)
+c = sp.cell(row=cw, column=1, value="  CICLO PROMEDIO SEGÚN EL WMS QUE PROCESÓ EL PEDIDO")
+c.font = f(9, True, WHITE); c.fill = PatternFill("solid", fgColor=NAVY); c.alignment = Alignment(vertical="center")
+sp.row_dimensions[cw].height = 19
+for i, w_ in enumerate(["Centralizado", "Descentralizado", "Ambos"]):
+    rr = cw + 1 + i
+    sp.merge_cells(start_row=rr, start_column=1, end_row=rr, end_column=2)
+    a = sp.cell(row=rr, column=1, value=w_); a.font = f(10, True); a.alignment = RGT
+    a.fill = PatternFill("solid", fgColor=GREY_H); a.border = BOX
+    sp.cell(row=rr, column=2).border = BOX; sp.cell(row=rr, column=2).fill = PatternFill("solid", fgColor=GREY_H)
+    cc = sp.cell(row=rr, column=3,
+        value='=IF(COUNTIF($C${0}:$C${1},"{2}")=0,"",AVERAGEIF($C${0}:$C${1},"{2}",$Q${0}:$Q${1}))'.format(d1, d2, w_))
+    cc.number_format = "0"; cc.font = f(11, True, NAVY_D); cc.alignment = CTR
+    cc.fill = PatternFill("solid", fgColor=GREY_L); cc.border = BOX
+    dd = sp.cell(row=rr, column=4,
+        value='=IF(COUNTIF($C${0}:$C${1},"{2}")=0,"",COUNTIF($C${0}:$C${1},"{2}"))'.format(d1, d2, w_))
+    dd.number_format = "0"; dd.font = f(9, color="6E7A86"); dd.alignment = CTR
+    dd.fill = PatternFill("solid", fgColor=GREY_L); dd.border = BOX
+    sp.cell(row=rr, column=5, value="pedidos" if i == 0 else None).font = f(9, color="8C949C")
+    sp.row_dimensions[rr].height = 19
+lista(sp, "C{}:C{}".format(d1, d2), ["Centralizado", "Descentralizado", "Ambos"], "¿Qué WMS lo procesó?",
+      "Marca «Ambos» solo si el pedido se tocó realmente en los dos sistemas. Esos suelen ser los que más tiempo pierden.")
+lista(sp, "D{}:D{}".format(d1, d2), ["Alta", "Media", "Baja", "Urgente"], "Prioridad declarada",
       "La prioridad que el sistema o el supervisor le asignó. Se compara con el orden real en la hoja 7.")
-ayuda(sp, "A{}:A{}".format(d1, d2), "Pedido", "Número del pedido. Escoge de rutas y horas distintas, no los que te sugieran.")
-ayuda(sp, "D{}:D{}".format(d1, d2), "Líneas", "Cuántas referencias distintas tiene el pedido. Sirve para comparar pedidos de tamaños distintos.", "num")
+ayuda(sp, "A{}:A{}".format(d1, d2), "Pedido", "Número del pedido. Escoge de rutas y horas distintas y de los dos WMS.")
+ayuda(sp, "E{}:E{}".format(d1, d2), "Líneas", "Cuántas referencias distintas tiene el pedido. Sirve para comparar pedidos de tamaños distintos.", "num")
 for col, t_, m_ in (
-    ("E", "Hora de liberación", "Cuando el pedido queda disponible para alistar, no cuando el cliente lo puso. Formato HH:MM."),
-    ("F", "Inicio de alistamiento", "Cuando el operario toma la orden y arranca. Formato HH:MM."),
-    ("G", "Fin de alistamiento", "Cuando el pedido queda completo, antes de chequeo. Formato HH:MM."),
-    ("H", "Fin de chequeo", "Cuando queda verificado y rotulado. Si no hay chequeo aparte, déjala vacía."),
-    ("I", "Inicio de cargue", "Cuando el primer bulto sube al vehículo, no cuando el vehículo llega."),
-    ("J", "Salida del vehículo", "Cuando el vehículo sale de las instalaciones. Formato HH:MM.")):
+    ("F", "Hora de liberación", "Cuando el pedido queda disponible para alistar, no cuando el cliente lo puso. Formato HH:MM."),
+    ("G", "Inicio de alistamiento", "Cuando el operario toma la orden y arranca. Formato HH:MM."),
+    ("H", "Fin de alistamiento", "Cuando el pedido queda completo, antes de chequeo. Formato HH:MM."),
+    ("I", "Fin de chequeo", "Cuando queda verificado y rotulado. Si no hay chequeo aparte, déjala vacía."),
+    ("J", "Inicio de cargue", "Cuando el primer bulto sube al vehículo, no cuando el vehículo llega."),
+    ("K", "Salida del vehículo", "Cuando el vehículo sale de las instalaciones. Formato HH:MM.")):
     ayuda(sp, "{0}{1}:{0}{2}".format(col, d1, d2), t_, m_)
-ayuda(sp, "S{}:S{}".format(d1, d2), "Observación", "Por qué esperó, si hubo reproceso, si faltó producto, si el vehículo llegó tarde.")
-r = nota(sp, tr + 2, N,
+ayuda(sp, "T{}:T{}".format(d1, d2), "Observación", "Por qué esperó, si hubo reproceso, si faltó producto, si hubo que pasarlo por el otro WMS.")
+r = nota(sp, cw + 5, N,
     "CÓMO SE LEE — «Alistado esperando cargue» es el tiempo en que el pedido ya está terminado y no sale: ocupa staging, "
     "no agrega nada y es invisible en cualquier indicador de productividad. El «% del ciclo en espera» es todo lo que no "
-    "fue alistamiento ni cargue. Si pasa de 60%, el problema no es la velocidad de la gente: es la sincronización entre "
-    "alistamiento, transporte y programación de salidas. Ese es el número que cambia la conversación.", W)
+    "fue alistamiento ni cargue; si pasa de 60%, el problema no es la velocidad de la gente sino la sincronización. Y si "
+    "el ciclo de un WMS es sistemáticamente más largo que el del otro, ahí tienes cuantificado el costo de operar con dos "
+    "sistemas — que es distinto de decir que «es complicado».", W)
 sp.freeze_panes = "B{}".format(ej); sp.print_title_rows = "{0}:{0}".format(hdr)
 # ================================================================= 7 PRIORIDADES
 W = [20, 22, 24, 24, 15, 15, 34]; N = 7
@@ -1069,6 +1104,7 @@ r = banda(pg, r, N, "REGLA GENERAL", NAVY)
 r = linea(pg, r, N, W, "▪", "A los operarios se les pregunta sin el supervisor delante. Si el supervisor está presente, la respuesta es la que él querría oír.")
 r = linea(pg, r, N, W, "▪", "Pregunta y cállate. El silencio incómodo después de la respuesta es donde aparece la información que no te iban a dar.")
 r = linea(pg, r, N, W, "▪", "Nunca preguntes «¿quién se equivocó?». Cierra la información para el resto del día y para la próxima visita.")
+r = linea(pg, r, N, W, "▪", "La operación trabaja con dos WMS, uno para el CD centralizado y otro para el descentralizado. Las preguntas marcadas «Dos WMS» tienen ese marco: pregúntalas siempre precisando de cuál de los dos estás hablando.")
 r = banda(pg, r, N, "PREGUNTAS QUE NO FUNCIONAN Y CON QUÉ REEMPLAZARLAS", RED_T)
 malas = [
     ("«¿Por qué está tan lleno?»", "«Muéstreme el pallet más viejo que hay en piso.»"),
@@ -1121,6 +1157,30 @@ preguntas = [
      "Si todo es urgente, nada lo es.",
      "Más del 10% del día son urgentes.",
      "Definir qué es urgente, quién lo autoriza y poner tope diario."),
+    ("Alistamiento", "¿Cómo hacen el alistamiento, lo hacen conjunto o lo hacen separado?",
+     "Define si el pedido se arma de una vez o en pedazos que hay que consolidar después.",
+     "Se alista separado y se junta en la puerta sin control.",
+     "Cada consolidación es una oportunidad de error. Pide ver el punto donde se junta y qué se verifica ahí."),
+    ("Alistamiento", "¿Qué hacen cuando no cuadra el SKU o la cantidad de la ubicación contra lo que necesitan al alistar? ¿A quién le informan? ¿Cómo lo solucionan?",
+     "Revela el circuito real de la diferencia de inventario, que es donde se pierde el ERI.",
+     "El operario resuelve solo, toma de otra ubicación o simplemente no reporta.",
+     "Sin circuito de reporte la diferencia nunca llega al sistema. Definir quién recibe, en cuánto responde y que reportar no tenga costo para el operario."),
+    ("Puerta", "¿Cómo están separando y ubicando la mercancía alistada en las puertas?",
+     "Un staging sin reglas de ubicación es donde se mezclan pedidos y rutas.",
+     "No hay marcación en piso ni posición asignada por ruta o vehículo.",
+     "Marcar el piso por puerta y por ruta, con capacidad máxima visible. Es cero inversión."),
+    ("Puerta", "¿Qué controles tienen en la puerta antes del cargue de vehículos?",
+     "Es el último punto donde un error todavía no le costó al cliente.",
+     "El control es visual, o lo hace el mismo que alistó.",
+     "Definir un control independiente de quien alistó: escaneo del rótulo contra manifiesto, o verificación por peso."),
+    ("Puerta", "¿Cómo identifican en el cargue qué mercancía va en transporte masivo o semimasivo y qué va por paqueteo?",
+     "Mezclar modos de transporte en el cargue produce despachos cruzados y devoluciones caras.",
+     "Se distingue de memoria o por el color de la estiba, sin rótulo.",
+     "Rotular por modo de transporte desde el alistamiento, no en la puerta."),
+    ("Entregas", "¿Cómo manejan las entregas centralizadas y quién responde por ellas?",
+     "PENDIENTE DE AJUSTAR: el mensaje original quedó cortado en la captura.",
+     "No hay un responsable claro del flujo centralizado.",
+     "Confirmar la redacción exacta con Jaime antes de la visita."),
     ("Despacho", "¿Dónde se pone un pedido alistado mientras espera, y cuál es la capacidad de ese espacio?",
      "Conecta el tiempo de espera con el staging saturado.",
      "No hay capacidad definida ni marcación en piso.",
@@ -1137,6 +1197,38 @@ preguntas = [
      "Si son los mismos, el cargue interrumpe el alistamiento y viceversa.",
      "Son los mismos y se turnan según la urgencia.",
      "Separar los roles en el pico, aunque sea solo en las tres horas antes del corte."),
+    ("Dos WMS", "¿Qué alcance tiene cada WMS y hasta dónde llega cada uno?",
+     "Sin este mapa, ningún dato que te entreguen después es interpretable.",
+     "No lo saben con precisión, o cada área responde distinto.",
+     "Dibújalo tú en una hoja y hazlo validar. Debería ser el primer entregable de la visita."),
+    ("Dos WMS", "¿Cómo hacen la programación de olas en el CD descentralizado y cómo se conecta con el centralizado?",
+     "PENDIENTE DE AJUSTAR: el mensaje original quedó cortado en la captura.",
+     "Las olas se programan sin ver la carga del otro CD.",
+     "Confirmar la redacción con Jaime. Mientras tanto, pide que te muestren cómo se programa una ola de hoy."),
+    ("Dos WMS", "¿Cada cuánto se sincroniza el inventario entre los dos sistemas y quién lo verifica?",
+     "La desincronización es la causa raíz de los faltantes fantasma.",
+     "Se sincroniza por lotes en la noche, o nadie lo verifica.",
+     "Pedir el inventario de los dos sistemas para las mismas ubicaciones y medir la diferencia real. Está en la hoja 10."),
+    ("Dos WMS", "¿Qué pasa cuando la interfaz falla? ¿Quién se da cuenta y en cuánto tiempo?",
+     "Mide si hay monitoreo o si se descubre cuando ya dolió.",
+     "Se dan cuenta cuando un operario reclama.",
+     "Alerta automática de transacciones en cola, con un responsable por turno."),
+    ("Dos WMS", "¿Dónde hay doble digitación?",
+     "Cada digitación repetida es tiempo perdido y un punto de error.",
+     "Se digita lo mismo en los dos sistemas.",
+     "Cuantificar cuántas transacciones diarias y cuánto tiempo cuesta. Suele justificar sola la integración."),
+    ("Dos WMS", "Cuando los dos sistemas difieren, ¿cuál manda?",
+     "Sin regla, cada quien decide y el inventario nunca converge.",
+     "Depende de quién esté de turno.",
+     "Definir el sistema maestro por tipo de dato y publicarlo."),
+    ("Dos WMS", "¿Cuántas transacciones quedaron en cola o en error ayer?",
+     "Si responden con un número, hay monitoreo. Si no, no lo hay.",
+     "No lo saben o no existe el log.",
+     "Pedir el log de interfaz. Está en la hoja 10."),
+    ("Dos WMS", "¿Un mismo pedido puede pasar por los dos sistemas? ¿Cómo se consolida?",
+     "Los pedidos que cruzan los dos sistemas suelen ser los que más tiempo pierden.",
+     "Sí, y la consolidación es manual.",
+     "Márcalos como «Ambos» en la hoja 6 y compara su ciclo contra el resto. Ahí queda cuantificado el costo de operar con dos sistemas."),
     ("Operario", "¿Qué es lo que más tiempo le hace perder en el día?",
      "Nombra el desperdicio real antes que cualquier indicador.",
      "Menciona esperar producto o caminar.",
@@ -1207,6 +1299,11 @@ datos = [
     ("WMS / ERP", "Maestro de SKU: dimensiones, peso, empaque, paletización y punto de reorden vigente", "Excel"),
     ("WMS / ERP", "Devoluciones y notas crédito con su causal", "CSV plano"),
     ("WMS / ERP", "Resultados de los últimos conteos cíclicos y ajustes de inventario con su causal", "Excel"),
+    ("Sistemas", "Log de interfaz entre los dos WMS: transacciones fallidas y en cola, con fecha y hora", "CSV plano"),
+    ("Sistemas", "Inventario de los dos sistemas para las mismas ubicaciones, tomado al mismo corte", "CSV plano"),
+    ("Indicadores", "Facturas con novedades sobre el total de facturas, por causal, últimas 13 semanas", "CSV plano"),
+    ("Indicadores", "Faltantes, sobrantes y roturas valorizados sobre el valor del inventario", "Excel"),
+    ("Indicadores", "Ficha técnica con la definición y la fórmula de cada indicador que reportan", "PDF o Word"),
     ("Operación", "Regla de priorización de pedidos vigente, como documento", "PDF o Word"),
     ("Operación", "Pedidos que quedaron alistados sin salir, por día, últimas 13 semanas", "Excel"),
     ("Gestión humana", "Headcount por turno y por función, separando alistamiento, reabastecimiento y cargue", "Excel"),
@@ -1340,6 +1437,14 @@ terminos = [
     ("Order fill rate", "Porcentaje de líneas despachadas completas sobre las pedidas.", "Mide si el cliente recibió lo que pidió."),
     ("Pedido perfecto", "A tiempo, completo, sin daño y con documento correcto. Se multiplican entre sí.", "Es el indicador que resume la confiabilidad del despacho."),
     ("Poka-yoke", "Un control que hace imposible el error, no que lo detecta después.", "Escaneo obligatorio o verificación por peso valen más que cualquier capacitación."),
+    ("WMS", "Sistema de gestión de bodega: administra ubicaciones, inventario y tareas.", "Madrid opera con dos, uno centralizado y otro descentralizado. Todo dato hay que preguntarlo por sistema."),
+    ("Interfaz", "El puente que pasa información de un sistema a otro.", "Con dos WMS, lo que falla en la interfaz reaparece después como diferencia de inventario."),
+    ("Doble digitación", "Registrar la misma transacción en dos sistemas.", "Cada repetición es tiempo perdido y un punto de error."),
+    ("Paqueteo", "Envío de pocas unidades por transportadora de mensajería, sin vehículo dedicado.", "Se rotula y se separa distinto: mezclarlo con el masivo produce despachos cruzados."),
+    ("Transporte masivo", "Vehículo completo dedicado a una ruta o a un cliente grande.", "Es el que más pesa en el cargue y el que más cuesta cuando espera."),
+    ("Transporte semimasivo", "Vehículo que consolida varios destinos medianos en una misma ruta.", "Necesita secuencia de cargue por orden inverso de entrega."),
+    ("Novedad", "Cualquier diferencia reportada sobre una factura: faltante, sobrante, avería o referencia equivocada.", "El % de facturas con novedades es el indicador de despachos sin error que reporta el CEDI."),
+    ("Densidad de ubicación", "Qué tan aprovechado está el espacio de cada posición.", "Es lo que este archivo mide como capacidad fantasma."),
     ("Gemba", "El lugar donde ocurre el trabajo real.", "La evaluación se hace en el piso, no en la sala de juntas."),
 ]
 r = hdr + 1
@@ -1352,6 +1457,120 @@ for t, q, p in terminos:
     gl.row_dimensions[r].height = 30
     r += 1
 gl.freeze_panes = "A{}".format(hdr + 1); gl.print_title_rows = "{0}:{0}".format(hdr)
+# ================================================================= 12 INDICADORES DECLARADOS
+W = [32, 38, 15, 15, 20, 16, 13, 20, 32]; N = 9
+setup(id_, W, "1B7A4C")
+r = titulo(id_, 1, N, "12 · INDICADORES QUE REPORTA EL CEDI",
+           "Lo que ellos dicen frente a lo que tú mediste. La diferencia entre las dos cifras — y entre las dos definiciones — suele ser el hallazgo.")
+r = bloque(id_, r, N, W,
+    "Registrar los indicadores que el CEDI reporta, con la definición exacta que usan, y contrastarlos contra lo que mediste tú el mismo día.",
+    "Tú. Los pides en la reunión de apertura y los completas al cierre.",
+    "10 minutos al pedirlos, 20 minutos al cierre para contrastar.",
+    "Esta hoja y las hojas 2, 4 y 6 ya diligenciadas.",
+    ["En la reunión de apertura pide los cinco indicadores de la lista, con su valor y su período.",
+     "NO LOS MIRES hasta terminar de medir. Guárdalos y sigue con tu día: es el mismo principio del conteo ciego.",
+     "Cuando te los den, anota también CÓMO los definen: la fórmula exacta y desde qué evento cuentan. Esa columna vale más que el número.",
+     "Al cierre del día abre esta hoja: la columna «Lo que medí yo» ya está llena desde las hojas 2, 4 y 6.",
+     "Marca en «¿Coinciden las definiciones?» si están midiendo lo mismo que tú. Donde la comparación sea directa, la brecha se calcula sola.",
+     "Los renglones en blanco del final son para cualquier otro indicador que reporten y que valga la pena registrar."],
+    ["Escribe el valor TAL COMO TE LO DEN, sin convertir. La conversión se anota en Observación.",
+     "Las celdas de porcentaje están formateadas como porcentaje: escribe 78% con el signo, o 0,78. Si escribes 78 vas a ver 7800%.",
+     "«Lo que medí yo» y «Brecha» se calculan solas. No las escribas.",
+     "Un indicador con el mismo nombre y distinta definición NO es el mismo indicador. Antes de comparar cifras, compara definiciones.",
+     "Si el indicador se calcula distinto en el CD centralizado y en el descentralizado, registra los dos por separado en los renglones libres.",
+     "Donde diga «—» en Brecha es porque las dos cifras no son restables entre sí. Eso no es un problema: el contraste ahí es de definición, no de aritmética."],
+    ["¿Desde cuándo miden este indicador y quién lo calcula?",
+     "¿Me muestra el dato crudo del que sale, no el reporte ya armado?",
+     "¿Este indicador se calcula igual en el CD centralizado y en el descentralizado?",
+     "¿Cuál fue el peor mes del último año en este indicador y qué pasó?",
+     "¿Qué decisión concreta se tomó el último trimestre a partir de este número?"])
+hdr = r
+r = tabla(id_, r, ["Indicador declarado", "Cómo lo definen ellos", "Valor que reportan", "Período",
+                   "Fuente / quién lo entregó", "Lo que medí yo", "Brecha",
+                   "¿Coinciden las definiciones?", "Observación"], alturas=40)
+ej = r
+ejemplo(id_, ej, N, ["EJ ▸ Despachos sin error", "Facturas con novedad ÷ facturas totales del mes",
+                     0.026, "Julio 2026", "Jefe del CEDI", "—", "—", "No comparable",
+                     "Solo cuentan novedades reclamadas por el cliente"])
+id_.cell(row=ej, column=3).number_format = "0.0%"
+
+# (indicador, definición declarada, clave medida, formato, comparable, observación guía)
+IND = [
+    ("Despachos sin error", "% de facturas con novedades sobre el total de facturas",
+     None, "0.0%", False,
+     "No hay medición propia en la visita: es un indicador histórico. Pídelo con el detalle por causal (hoja 10)."),
+    ("Calidad del inventario", "% de faltantes, sobrantes y roturas sobre el valor del inventario",
+     KEY["eri"], "0.0%", False,
+     "No es lo mismo que el ERI. Medido sobre valor, faltantes y sobrantes se compensan; el ERI es binario por ubicación. Anota los dos."),
+    ("Densidad del CD", "Qué tan llenas y aprovechadas están las ubicaciones",
+     KEY["fantasma"], "0.0%", False,
+     "Tu medición es el % de capacidad fantasma. Si ellos reportan aprovechamiento, es el complemento: 100% menos su cifra."),
+    ("Ocupación del CD", "N.º de ubicaciones con inventario",
+     KEY["ocup"], "0.0%", True,
+     "Comparable solo si lo reportan en porcentaje. Si lo dan en número de ubicaciones, divídelo entre las posiciones habilitadas antes de escribirlo."),
+    ("Tiempo de ciclo de despacho", "Planeación, alistamiento, cargue",
+     KEY["ciclo_total"], "0", True,
+     "Comparable en minutos contra el ciclo total de la hoja 6. Pregunta desde qué evento arrancan a contar: si no es la liberación, no es el mismo ciclo."),
+]
+d1 = ej + 1
+d2 = d1 + len(IND) + 4          # cinco renglones libres al final
+for i, (nom, defi, key, fmt, comp, obs) in enumerate(IND):
+    rr = d1 + i
+    id_.cell(row=rr, column=1, value=nom)
+    id_.cell(row=rr, column=2, value=defi)
+    id_.cell(row=rr, column=3).number_format = fmt
+    if key:
+        id_.cell(row=rr, column=6, value='=IF({0}="","",{0})'.format(key))
+        id_.cell(row=rr, column=6).number_format = fmt
+    else:
+        id_.cell(row=rr, column=6, value="—")
+    if comp:
+        id_.cell(row=rr, column=7, value='=IF(OR($C{0}="",$F{0}=""),"",$C{0}-$F{0})'.format(rr))
+        id_.cell(row=rr, column=7).number_format = fmt
+    else:
+        id_.cell(row=rr, column=7, value="—")
+    id_.cell(row=rr, column=9, value=obs)
+libres = d1 + len(IND)
+for rr in range(libres, d2 + 1):
+    id_.cell(row=rr, column=7, value='=IF(OR($C{0}="",$F{0}=""),"",$C{0}-$F{0})'.format(rr))
+cuerpo(id_, d1, d2, N, entrada=(2, 3, 4, 5, 8, 9), calc=(6, 7), h=34)
+for rr in range(d1, d2 + 1):
+    for c_ in (3, 4, 6, 7, 8):
+        id_.cell(row=rr, column=c_).alignment = CTR
+    id_.cell(row=rr, column=1).font = f(10, True)
+    id_.cell(row=rr, column=9).font = f(9, color="6E7A86")
+    if rr >= libres:
+        cell = id_.cell(row=rr, column=1)
+        cell.fill = PatternFill("solid", fgColor=YELLOW); cell.font = f(10, color="00329B")
+        cell = id_.cell(row=rr, column=6)
+        cell.fill = PatternFill("solid", fgColor=YELLOW); cell.font = f(10, color="00329B")
+for rr in range(d1, d1 + len(IND)):
+    id_.cell(row=rr, column=6).font = f(11, True, NAVY_D)
+    id_.cell(row=rr, column=7).font = f(11, True)
+lista(id_, "H{}:H{}".format(d1, d2), ["Sí", "No", "No comparable"], "¿Coinciden las definiciones?",
+      "Sí = miden exactamente lo mismo que tú. No = mismo nombre, distinta fórmula. No comparable = bases distintas que no se restan.")
+ayuda(id_, "A{}:A{}".format(libres, d2), "Otro indicador", "Cualquier otro indicador que reporten y que valga la pena registrar.")
+ayuda(id_, "B{}:B{}".format(d1, d2), "Cómo lo definen ellos",
+      "La fórmula exacta y desde qué evento cuentan. Esta columna vale más que el número: un mismo nombre con distinta definición no es el mismo indicador.")
+ayuda(id_, "C{}:C{}".format(d1, d2), "Valor que reportan",
+      "Tal como te lo den, sin convertir. En celdas de porcentaje escribe 78% con el signo, o 0,78 — nunca 78 solo.")
+ayuda(id_, "D{}:D{}".format(d1, d2), "Período", "A qué mes o semana corresponde la cifra. Sin período, el número no dice nada.")
+ayuda(id_, "E{}:E{}".format(d1, d2), "Fuente", "Quién te lo entregó y de qué sistema o reporte lo sacó.")
+ayuda(id_, "F{}:F{}".format(libres, d2), "Lo que medí yo", "Si mediste algo equivalente, escríbelo aquí para que la brecha se calcule.")
+ayuda(id_, "I{}:I{}".format(d1, d2), "Observación", "Diferencias de definición, conversiones que hiciste, o lo que dijeron al entregarlo.")
+id_.conditional_formatting.add("H{}:H{}".format(d1, d2), CellIsRule(operator="equal", formula=['"No"'],
+    fill=PatternFill("solid", fgColor=RED_BG), font=f(10, True, RED_T)))
+id_.conditional_formatting.add("H{}:H{}".format(d1, d2), CellIsRule(operator="equal", formula=['"No comparable"'],
+    fill=PatternFill("solid", fgColor=AMB_BG), font=f(10, True, AMB_T)))
+id_.conditional_formatting.add("H{}:H{}".format(d1, d2), CellIsRule(operator="equal", formula=['"Sí"'],
+    fill=PatternFill("solid", fgColor=GRN_BG), font=f(10, True, GRN_T)))
+r = nota(id_, d2 + 2, N,
+    "CÓMO SE LEE — Hay tres desenlaces posibles y los tres son útiles. Si las cifras coinciden, el CEDI se conoce y puedes "
+    "confiar en sus reportes para el análisis. Si difieren con la misma definición, hay un problema de cálculo o de fuente y "
+    "vale la pena rastrearlo. Y si el nombre es igual pero la definición no — el caso más frecuente, sobre todo en calidad "
+    "de inventario — el hallazgo no es la cifra: es que el CEDI y usted han estado hablando de cosas distintas creyendo que "
+    "hablaban de la misma. Con dos WMS de por medio, verifica además si el indicador se calcula igual en los dos sistemas.", W)
+id_.freeze_panes = "B{}".format(ej); id_.print_title_rows = "{0}:{0}".format(hdr)
 # ================================================================= RESUMEN
 W = [46, 14, 15, 14, 52, 50]; N = 6
 setup(rs, W, NAVY)
