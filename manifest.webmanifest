@@ -1,0 +1,16 @@
+{
+  "name": "HIT Tracker — Método Arthur Jones",
+  "short_name": "HIT Tracker",
+  "description": "Registro de entrenamiento HIT: 1 serie al fallo, cadencia 4-2-4, cardio Zona 2 y medidas corporales.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1115",
+  "theme_color": "#0f1115",
+  "lang": "es",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
