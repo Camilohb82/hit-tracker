@@ -211,6 +211,61 @@ canvas{width:100%;height:190px;display:block}
     </div>
   </div>
 
+  <!-- ============ VISTA MONSERRATE ============ -->
+  <div id="view-monserrate" class="view">
+    <div class="stat-row" id="mon-stats"></div>
+
+    <div class="card">
+      <h2>Registrar subida</h2>
+      <div class="form-grid">
+        <div><label>Fecha</label><input type="date" id="mo-fecha"></div>
+        <div><label>Tiempo total (mm:ss)</label><input type="text" id="mo-tiempo" inputmode="numeric" placeholder="44:30"></div>
+        <div><label>Tipo de subida</label><select id="mo-tipo">
+          <option value="ritmo">Ritmo objetivo (parejo)</option>
+          <option value="intervalos">Intervalos</option>
+          <option value="suave">Suave (puedo hablar)</option>
+          <option value="tope">A tope</option>
+        </select></div>
+        <div><label>Esfuerzo percibido 1-10</label><input type="number" id="mo-rpe" min="1" max="10" placeholder="ej. 7"></div>
+        <div><label>Me acosté (hora)</label><input type="time" id="mo-acoste"></div>
+        <div><label>Me levanté (hora)</label><input type="time" id="mo-levante"></div>
+        <div><label>Comí antes</label><select id="mo-comida">
+          <option>Banano</option><option>Manzana</option><option>Nada (ayunas)</option><option>Otro</option>
+        </select></div>
+        <div><label>Tinto (min antes de subir)</label><select id="mo-tinto">
+          <option value="">No tomé</option><option value="5">~5 min</option><option value="15">~15 min</option>
+          <option value="30">~30 min</option><option value="45">~45 min</option><option value="60">~60 min</option>
+        </select></div>
+      </div>
+      <div class="form-col">
+        <label>Parciales (opcional, mm:ss acumulado en tus puntos de referencia)</label>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:0">
+          <input type="text" id="mo-p1" inputmode="numeric" placeholder="Punto 1">
+          <input type="text" id="mo-p2" inputmode="numeric" placeholder="Punto 2">
+          <input type="text" id="mo-p3" inputmode="numeric" placeholder="Punto 3">
+        </div>
+      </div>
+      <div class="form-col"><label>Notas (cómo me sentí, clima, estrés…)</label><input type="text" id="mo-notas" placeholder="opcional"></div>
+      <button class="btn" onclick="guardarSubida()">Guardar subida</button>
+    </div>
+
+    <div class="card">
+      <h2>Tiempos</h2>
+      <div class="chart-wrap"><canvas id="chart-mon" height="190"></canvas></div>
+      <div class="muted" style="margin-top:6px">Línea amarilla: 45:00 · línea verde: 40:00</div>
+    </div>
+
+    <div class="card">
+      <h2>¿Qué tienen en común tus días buenos y malos?</h2>
+      <div id="mon-patrones"></div>
+    </div>
+
+    <div class="card">
+      <h2>Subidas</h2>
+      <div id="mon-lista"></div>
+    </div>
+  </div>
+
   <!-- ============ VISTA HISTORIAL ============ -->
   <div id="view-historial" class="view">
     <div class="card">
@@ -234,6 +289,7 @@ canvas{width:100%;height:190px;display:block}
   <button id="nav-hoy" class="active" onclick="mostrarVista('hoy')"><span class="ico">🏋️</span>Hoy</button>
   <button id="nav-rutina" onclick="mostrarVista('rutina')"><span class="ico">📋</span>Rutina</button>
   <button id="nav-progreso" onclick="mostrarVista('progreso')"><span class="ico">📈</span>Progreso</button>
+  <button id="nav-monserrate" onclick="mostrarVista('monserrate')"><span class="ico">⛰️</span>Monserrate</button>
   <button id="nav-historial" onclick="mostrarVista('historial')"><span class="ico">🗂️</span>Historial</button>
 </nav>
 
@@ -298,9 +354,13 @@ let db = cargar();
 function cargar(){
   try{
     const raw = localStorage.getItem(KEY);
-    if(raw) return JSON.parse(raw);
+    if(raw){
+      const d = JSON.parse(raw);
+      if(!d.monserrate) d.monserrate = [];
+      return d;
+    }
   }catch(e){}
-  return {workouts:[], cardio:[], metrics:[]};
+  return {workouts:[], cardio:[], metrics:[], monserrate:[]};
 }
 function guardar(){ localStorage.setItem(KEY, JSON.stringify(db)); }
 
@@ -361,6 +421,149 @@ function mostrarVista(v){
   document.getElementById('nav-'+v).classList.add('active');
   if(v==='progreso') renderProgreso();
   if(v==='historial') renderHistorial();
+  if(v==='monserrate') renderMonserrate();
+}
+
+/* ---------- MONSERRATE ---------- */
+const TIPOS_SUBIDA = {ritmo:'Ritmo objetivo', intervalos:'Intervalos', suave:'Suave', tope:'A tope'};
+// "44:30" o "44" -> segundos; null si no es válido
+function parseTiempo(s){
+  s = (s||'').trim().replace(/[.,]/g, ':');
+  if(!s) return null;
+  const m = s.match(/^(\d{1,3})(?::(\d{1,2}))?$/);
+  if(!m) return null;
+  const seg = m[2] ? parseInt(m[2]) : 0;
+  if(seg >= 60) return null;
+  const total = parseInt(m[1])*60 + seg;
+  return total > 0 ? total : null;
+}
+function fmtTiempo(seg){
+  seg = Math.round(seg);
+  return `${Math.floor(seg/60)}:${String(seg%60).padStart(2,'0')}`;
+}
+// horas entre acostarse y levantarse (cruza medianoche)
+function horasSueno(acoste, levante){
+  if(!acoste || !levante) return null;
+  const [ah,am] = acoste.split(':').map(Number), [lh,lm] = levante.split(':').map(Number);
+  let min = (lh*60+lm) - (ah*60+am);
+  if(min <= 0) min += 1440;
+  return +(min/60).toFixed(1);
+}
+function diasEntre(isoA, isoB){
+  return Math.round((new Date(isoB+'T12:00:00') - new Date(isoA+'T12:00:00')) / 86400000);
+}
+// subidas ordenadas con días de descanso desde la anterior
+function subidasConDescanso(){
+  const s = db.monserrate.map((x,i) => ({...x, _idx:i})).sort((a,b) => a.date.localeCompare(b.date));
+  return s.map((x,i) => ({...x, descanso: i>0 ? diasEntre(s[i-1].date, x.date) : null}));
+}
+function guardarSubida(){
+  const seg = parseTiempo(document.getElementById('mo-tiempo').value);
+  if(!seg){ toast('Tiempo no válido — usa mm:ss, ej. 44:30'); return; }
+  const fecha = document.getElementById('mo-fecha').value || hoyStr(new Date());
+  const parciales = ['mo-p1','mo-p2','mo-p3'].map(id => parseTiempo(document.getElementById(id).value)).filter(Boolean);
+  const tinto = document.getElementById('mo-tinto').value;
+  const acoste = document.getElementById('mo-acoste').value, levante = document.getElementById('mo-levante').value;
+  db.monserrate.push({
+    date: fecha,
+    seg,
+    tipo: document.getElementById('mo-tipo').value,
+    rpe: parseInt(document.getElementById('mo-rpe').value) || null,
+    acoste: acoste || null,
+    levante: levante || null,
+    sueno: horasSueno(acoste, levante),
+    comida: document.getElementById('mo-comida').value,
+    tinto: tinto === '' ? null : parseInt(tinto),
+    parciales,
+    notas: document.getElementById('mo-notas').value.trim()
+  });
+  db.monserrate.sort((a,b) => a.date.localeCompare(b.date));
+  guardar();
+  ['mo-tiempo','mo-rpe','mo-p1','mo-p2','mo-p3','mo-notas'].forEach(id => document.getElementById(id).value = '');
+  const sub45 = seg < 45*60 ? ' · bajo 45 🎯' : '';
+  toast(`Subida guardada — ${fmtTiempo(seg)}${sub45}`);
+  renderMonserrate();
+}
+function borrarSubida(idx){
+  if(!confirm('¿Eliminar esta subida?')) return;
+  db.monserrate.splice(idx,1);
+  guardar(); renderMonserrate();
+}
+function renderMonserrate(){
+  const fe = document.getElementById('mo-fecha');
+  if(!fe.value) fe.value = hoyStr(new Date());
+  // recordar última hora de sueño para no reescribirla siempre
+  const ult = db.monserrate[db.monserrate.length-1];
+  if(ult){
+    if(!document.getElementById('mo-acoste').value && ult.acoste) document.getElementById('mo-acoste').value = ult.acoste;
+    if(!document.getElementById('mo-levante').value && ult.levante) document.getElementById('mo-levante').value = ult.levante;
+  }
+
+  const s = subidasConDescanso();
+  const tiempos = s.map(x => x.seg);
+  const mejor = tiempos.length ? Math.min(...tiempos) : null;
+  const ult5 = tiempos.slice(-5);
+  const prom5 = ult5.length ? ult5.reduce((a,b)=>a+b,0)/ult5.length : null;
+  const bajo45 = tiempos.filter(t => t < 45*60).length;
+  document.getElementById('mon-stats').innerHTML =
+    `<div class="stat"><div class="v">${mejor?fmtTiempo(mejor):'—'}</div><div class="l">Mejor tiempo</div><div class="d ${mejor&&mejor<40*60?'d-up':'d-flat'}">${mejor?(mejor<40*60?'¡bajo 40!':`a ${fmtTiempo(mejor-40*60)} de 40`):'—'}</div></div>
+     <div class="stat"><div class="v">${prom5?fmtTiempo(prom5):'—'}</div><div class="l">Promedio últimas ${ult5.length||5}</div><div class="d ${prom5&&prom5<45*60?'d-up':'d-flat'}">${prom5?(prom5<45*60?'bajo 45 ✓':'meta: 45:00'):'—'}</div></div>
+     <div class="stat"><div class="v">${bajo45}/${tiempos.length}</div><div class="l">Subidas bajo 45</div><div class="d d-flat">${tiempos.length?Math.round(bajo45/tiempos.length*100)+'%':'—'}</div></div>`;
+
+  drawLine('chart-mon', s.map(x => ({x: x.date.slice(5).replace('-','/'), y: x.seg/60})),
+    {color:'#60a5fa', refs:[{v:45, color:'#fbbf24'},{v:40, color:'#34d399'}], fmtY: v => fmtTiempo(v*60)});
+
+  renderPatrones(s);
+
+  const cont = document.getElementById('mon-lista');
+  if(s.length === 0){ cont.innerHTML = '<div class="empty">Aún no hay subidas registradas.</div>'; return; }
+  cont.innerHTML = [...s].reverse().map(x => {
+      const idx = x._idx;
+      const det = [TIPOS_SUBIDA[x.tipo]||x.tipo];
+      if(x.rpe) det.push(`RPE ${x.rpe}`);
+      if(x.sueno!=null) det.push(`sueño ${x.sueno} h`);
+      det.push(x.comida);
+      det.push(x.tinto!=null ? `tinto ${x.tinto} min antes` : 'sin tinto');
+      if(x.descanso!=null) det.push(`${x.descanso} día${x.descanso===1?'':'s'} desde la anterior`);
+      const parc = x.parciales && x.parciales.length ? `<br>Parciales: ${x.parciales.map(fmtTiempo).join(' → ')} → ${fmtTiempo(x.seg)}` : '';
+      const color = x.seg < 40*60 ? 'var(--green)' : x.seg < 45*60 ? 'var(--amber)' : 'var(--text)';
+      return `<div class="hist-item">
+        <div class="hist-body"><div class="hist-date">${fmtFecha(x.date)}</div>
+          <b style="color:${color};font-size:17px">${fmtTiempo(x.seg)}</b>
+          <div class="hist-detail">${det.join(' · ')}${parc}${x.notas?`<br><i>${x.notas.replace(/</g,'&lt;')}</i>`:''}</div></div>
+        <button class="del-btn" onclick="borrarSubida(${idx})" title="Eliminar">✕</button>
+      </div>`;
+    }).join('');
+}
+// compara tiempo promedio entre dos grupos de subidas
+function renderPatrones(s){
+  const cont = document.getElementById('mon-patrones');
+  const MIN_N = 3;
+  if(s.length < 6){
+    cont.innerHTML = `<div class="empty">Registra al menos 6 subidas para empezar a comparar (llevas ${s.length}).<br>Con pocos datos cualquier diferencia es ruido.</div>`;
+    return;
+  }
+  const prom = arr => arr.reduce((a,b)=>a+b.seg,0)/arr.length;
+  const comparar = (titulo, nomA, grupoA, nomB, grupoB) => {
+    if(grupoA.length < MIN_N || grupoB.length < MIN_N)
+      return `<div class="hist-item"><div class="hist-body"><b>${titulo}</b><div class="hist-detail">Faltan datos (mínimo ${MIN_N} subidas por grupo: ${grupoA.length} vs ${grupoB.length}).</div></div></div>`;
+    const a = prom(grupoA), b = prom(grupoB), dif = Math.abs(a-b);
+    const mejorA = a < b;
+    const txt = dif < 30 ? 'Diferencia menor a 30 s: probablemente no importa.'
+      : `<b style="color:var(--green)">${mejorA?nomA:nomB}</b> eres ~${fmtTiempo(dif)} más rápido.`;
+    return `<div class="hist-item"><div class="hist-body"><b>${titulo}</b>
+      <div class="hist-detail">${nomA}: <b>${fmtTiempo(a)}</b> (${grupoA.length}) · ${nomB}: <b>${fmtTiempo(b)}</b> (${grupoB.length})<br>${txt}</div></div></div>`;
+  };
+  // excluye subidas suaves: no son comparables
+  const duras = s.filter(x => x.tipo !== 'suave');
+  const conSueno = duras.filter(x => x.sueno!=null);
+  const conDesc = duras.filter(x => x.descanso!=null);
+  cont.innerHTML =
+    comparar('Sueño', '≥ 7 h', conSueno.filter(x => x.sueno>=7), '< 7 h', conSueno.filter(x => x.sueno<7)) +
+    comparar('Tinto', 'Con tinto', duras.filter(x => x.tinto!=null), 'Sin tinto', duras.filter(x => x.tinto==null)) +
+    comparar('Comida', 'Comí algo', duras.filter(x => !x.comida.startsWith('Nada')), 'Ayunas', duras.filter(x => x.comida.startsWith('Nada'))) +
+    comparar('Descanso', '1 día desde la anterior', conDesc.filter(x => x.descanso<=1), '2+ días', conDesc.filter(x => x.descanso>=2)) +
+    `<div class="muted" style="margin-top:8px">Se excluyen las subidas "Suave". Son promedios simples, no prueban causa: úsalos como pista, no como verdad.</div>`;
 }
 
 /* ---------- HOY ---------- */
@@ -579,6 +782,7 @@ function renderHistorial(){
   db.workouts.forEach((w,i) => items.push({date:w.date, tipo:'w', idx:i, obj:w}));
   db.cardio.forEach((c,i) => items.push({date:c.date, tipo:'c', idx:i, obj:c}));
   db.metrics.forEach((m,i) => items.push({date:m.date, tipo:'m', idx:i, obj:m}));
+  db.monserrate.forEach((x,i) => items.push({date:x.date, tipo:'mo', idx:i, obj:x}));
   items.sort((a,b) => b.date.localeCompare(a.date));
   const cont = document.getElementById('hist-lista');
   if(items.length === 0){ cont.innerHTML = '<div class="empty">Aún no hay registros. ¡Empieza hoy!</div>'; return; }
@@ -593,6 +797,10 @@ function renderHistorial(){
       const c = it.obj;
       body = `<b><span class="pill pill-cardio">Cardio</span></b>
         <div class="hist-detail">${c.tipo} · <b>${c.mins} min</b>${c.fc?` · FC ${c.fc}`:''}${c.rpe?` · RPE ${c.rpe}`:''}</div>`;
+    } else if(it.tipo === 'mo'){
+      const x = it.obj;
+      body = `<b><span class="pill pill-cardio">⛰️ Monserrate</span></b>
+        <div class="hist-detail"><b>${fmtTiempo(x.seg)}</b> · ${TIPOS_SUBIDA[x.tipo]||x.tipo}${x.rpe?` · RPE ${x.rpe}`:''}</div>`;
     } else {
       const m = it.obj;
       const parts = [];
@@ -613,6 +821,7 @@ function borrarItem(tipo, idx){
   if(tipo === 'w') db.workouts.splice(idx,1);
   if(tipo === 'c') db.cardio.splice(idx,1);
   if(tipo === 'm') db.metrics.splice(idx,1);
+  if(tipo === 'mo') db.monserrate.splice(idx,1);
   guardar(); renderHistorial(); renderRutina();
 }
 
@@ -633,6 +842,7 @@ function importarDatos(ev){
     try{
       const data = JSON.parse(r.result);
       if(!data.workouts || !data.cardio || !data.metrics) throw new Error('formato');
+      if(!data.monserrate) data.monserrate = [];
       db = data; guardar();
       toast('Datos importados ✓');
       renderHoy(); renderRutina(); renderHistorial();
@@ -682,6 +892,7 @@ function drawLine(canvasId, puntos, opts){
   const padL = 38, padR = 10, padT = 14, padB = 26;
   const xs = puntos.map(p => p.x), ys = puntos.map(p => p.y);
   let ymin = Math.min(...ys), ymax = Math.max(...ys);
+  (opts.refs||[]).forEach(r => { ymin = Math.min(ymin, r.v); ymax = Math.max(ymax, r.v); });
   if(ymin === ymax){ ymin -= 1; ymax += 1; }
   const yr = ymax - ymin; ymin -= yr*0.15; ymax += yr*0.15;
   const X = i => padL + (puntos.length===1 ? (W-padL-padR)/2 : (W-padL-padR) * i/(puntos.length-1));
@@ -691,8 +902,13 @@ function drawLine(canvasId, puntos, opts){
   for(let g = 0; g <= 3; g++){
     const v = ymin + (ymax-ymin)*g/3, y = Y(v);
     ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
-    ctx.fillText(v.toFixed(1), padL-5, y+3);
+    ctx.fillText(opts.fmtY ? opts.fmtY(v) : v.toFixed(1), padL-5, y+3);
   }
+  // líneas de referencia (metas)
+  (opts.refs||[]).forEach(r => {
+    ctx.save(); ctx.strokeStyle = r.color; ctx.setLineDash([5,4]); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(padL, Y(r.v)); ctx.lineTo(W-padR, Y(r.v)); ctx.stroke(); ctx.restore();
+  });
   // línea
   ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
   puntos.forEach((p,i) => { const x=X(i), y=Y(p.y); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
@@ -760,6 +976,7 @@ renderHoy();
 renderRutina();
 window.addEventListener('resize', () => {
   if(document.getElementById('view-progreso').classList.contains('active')) renderProgreso();
+  if(document.getElementById('view-monserrate').classList.contains('active')) renderMonserrate();
 });
 </script>
 </body>
