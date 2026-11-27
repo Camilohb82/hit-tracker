@@ -519,11 +519,14 @@ function renderMonserrate(){
   if(s.length === 0){ cont.innerHTML = '<div class="empty">Aún no hay subidas registradas.</div>'; return; }
   cont.innerHTML = [...s].reverse().map(x => {
       const idx = x._idx;
-      const det = [TIPOS_SUBIDA[x.tipo]||x.tipo];
+      const det = [];
+      if(x.tipo) det.push(TIPOS_SUBIDA[x.tipo]||x.tipo);
       if(x.rpe) det.push(`RPE ${x.rpe}`);
       if(x.sueno!=null) det.push(`sueño ${x.sueno} h`);
-      det.push(x.comida);
-      det.push(x.tinto!=null ? `tinto ${x.tinto} min antes` : 'sin tinto');
+      if(!x.sinDetalle){
+        if(x.comida) det.push(x.comida);
+        det.push(x.tinto!=null ? `tinto ${x.tinto} min antes` : 'sin tinto');
+      } else det.push('solo tiempo');
       if(x.descanso!=null) det.push(`${x.descanso} día${x.descanso===1?'':'s'} desde la anterior`);
       const parc = x.parciales && x.parciales.length ? `<br>Parciales: ${x.parciales.map(fmtTiempo).join(' → ')} → ${fmtTiempo(x.seg)}` : '';
       const color = x.seg < 40*60 ? 'var(--green)' : x.seg < 45*60 ? 'var(--amber)' : 'var(--text)';
@@ -535,12 +538,26 @@ function renderMonserrate(){
       </div>`;
     }).join('');
 }
+// promedio y tendencia por día de la semana
+function porDiaSemana(s){
+  const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const g = {};
+  s.forEach(x => { const d = new Date(x.date+'T12:00:00').getDay(); (g[d] = g[d]||[]).push(x); });
+  const filas = Object.keys(g).map(Number).sort((a,b) => ((a+6)%7)-((b+6)%7)).map(d => {
+    const arr = g[d], prom = arr.reduce((a,b)=>a+b.seg,0)/arr.length;
+    const serie = arr.map(x => fmtTiempo(x.seg)).join(' → ');
+    return `${DIAS[d]}: <b>${fmtTiempo(prom)}</b> promedio (${arr.length})<br><span class="muted">${serie}</span>`;
+  });
+  if(filas.length < 2) return '';
+  return `<div class="hist-item"><div class="hist-body"><b>Por día de la semana</b><div class="hist-detail">${filas.join('<br>')}</div></div></div>`;
+}
 // compara tiempo promedio entre dos grupos de subidas
 function renderPatrones(s){
   const cont = document.getElementById('mon-patrones');
   const MIN_N = 3;
   if(s.length < 6){
-    cont.innerHTML = `<div class="empty">Registra al menos 6 subidas para empezar a comparar (llevas ${s.length}).<br>Con pocos datos cualquier diferencia es ruido.</div>`;
+    // con menos de 6 subidas igual se muestra el desglose por día
+    cont.innerHTML = `<div class="empty">Registra al menos 6 subidas para empezar a comparar (llevas ${s.length}).<br>Con pocos datos cualquier diferencia es ruido.</div>` + porDiaSemana(s);
     return;
   }
   const prom = arr => arr.reduce((a,b)=>a+b.seg,0)/arr.length;
@@ -556,13 +573,16 @@ function renderPatrones(s){
   };
   // excluye subidas suaves: no son comparables
   const duras = s.filter(x => x.tipo !== 'suave');
+  // las subidas registradas solo con el tiempo no dicen nada de comida ni tinto
+  const conDetalle = duras.filter(x => !x.sinDetalle && x.comida);
   const conSueno = duras.filter(x => x.sueno!=null);
   const conDesc = duras.filter(x => x.descanso!=null);
   cont.innerHTML =
     comparar('Sueño', '≥ 7 h', conSueno.filter(x => x.sueno>=7), '< 7 h', conSueno.filter(x => x.sueno<7)) +
-    comparar('Tinto', 'Con tinto', duras.filter(x => x.tinto!=null), 'Sin tinto', duras.filter(x => x.tinto==null)) +
-    comparar('Comida', 'Comí algo', duras.filter(x => !x.comida.startsWith('Nada')), 'Ayunas', duras.filter(x => x.comida.startsWith('Nada'))) +
-    comparar('Descanso', '1 día desde la anterior', conDesc.filter(x => x.descanso<=1), '2+ días', conDesc.filter(x => x.descanso>=2)) +
+    comparar('Tinto', 'Con tinto', conDetalle.filter(x => x.tinto!=null), 'Sin tinto', conDetalle.filter(x => x.tinto==null)) +
+    comparar('Comida', 'Comí algo', conDetalle.filter(x => !x.comida.startsWith('Nada')), 'Ayunas', conDetalle.filter(x => x.comida.startsWith('Nada'))) +
+    comparar('Descanso', '≤ 2 días desde la anterior', conDesc.filter(x => x.descanso<=2), '3+ días', conDesc.filter(x => x.descanso>=3)) +
+    porDiaSemana(duras) +
     `<div class="muted" style="margin-top:8px">Se excluyen las subidas "Suave". Son promedios simples, no prueban causa: úsalos como pista, no como verdad.</div>`;
 }
 
@@ -841,7 +861,23 @@ function importarDatos(ev){
   r.onload = () => {
     try{
       const data = JSON.parse(r.result);
+      // archivo solo con subidas: se suman a lo que ya hay, sin borrar nada
+      if(Array.isArray(data.monserrate) && !data.workouts){
+        let n = 0;
+        data.monserrate.forEach(x => {
+          if(!x.date || !x.seg) return;
+          if(db.monserrate.some(o => o.date === x.date)) return;
+          db.monserrate.push(x); n++;
+        });
+        db.monserrate.sort((a,b) => a.date.localeCompare(b.date));
+        guardar();
+        toast(`${n} subida${n===1?'':'s'} agregada${n===1?'':'s'} ✓`);
+        renderMonserrate(); renderHistorial();
+        ev.target.value = '';
+        return;
+      }
       if(!data.workouts || !data.cardio || !data.metrics) throw new Error('formato');
+      if(!confirm('Esto reemplaza TODOS tus datos actuales por los del archivo. ¿Continuar?')) return;
       if(!data.monserrate) data.monserrate = [];
       db = data; guardar();
       toast('Datos importados ✓');
